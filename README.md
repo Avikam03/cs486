@@ -6,6 +6,7 @@ Stuff I can't remember / think is worth memorizing 🕺
 
 ## lec2
 ### Calculate Joint Probability Using the Chain Rule
+
 $$
 \begin{align*}
 P(A_n, A_{n - 1}, \ldots, A_2, A_1) &= \prod_{i = 1}^n P(A_i | A_{i - 1} \land \dots \land  A_1) \\
@@ -57,15 +58,14 @@ need to make 8 comparisons
 - **Markov Blanket**: a set of neighbouring variables that directly effect the variable $X$'s value. given this set of variables, $X$ is conditionally independent of all other variables.
 
 Representing the joint distribution
-$$
-P(X_n \land \dots \land X_1) = \prod_{i = 1}^n P(X_i | \text{Parents}(X_i))
-$$
+
+$$P(X_n \land \dots \land X_1) = \prod_{i = 1}^n P(X_i | \text{Parents}(X_i))$$
 
 ### Three Key Structures
 
 #### Structure 1
 
-![400](assets/lec3.1.png)
+<img src="assets/lec3.1.png" width="400">
 
 - Burglary and Watson are not independent
 	- if Burglary is happening, Alarm is more likely to go off, meaning that Watson is more likely to call.
@@ -73,7 +73,7 @@ $$
 
 #### Structure 2
 
-![250](assets/lec3.2.png)
+<img src="assets/lec3.2.png" width="250">
 
 - Watson and Gibbon are not independent
 	- If Watson is more likely to call, Alarm is more likely to go off, meaning that Gibbon is more likely to call.
@@ -81,7 +81,7 @@ $$
 
 #### Structure 3
 
-![250](assets/lec3.3.png)
+<img src="assets/lec3.3.png" width="250">
 
 - Earthquake and Burglary are independent
 - Earthquake and Burglary not conditionally independent given Alarm
@@ -101,15 +101,14 @@ if $E$ d-separates $X$ and $Y$, then $X$ and $Y$ are conditionally independent g
 There are a few scenarios to consider while checking for blocked undirected paths
 #### Scenario 1
 
-![400](assets/lec4.1.png)
+<img src="assets/lec4.1.png" width="400">
 
 #### Scenario 2
 
-![400](assets/lec4.2.png)
-
+<img src="assets/lec4.2.png" width="400">
 #### Scenario 3
 
-![400](assets/lec4.3.png)
+<img src="assets/lec4.3.png" width="400">
 
 ### Constructing Bayesian Networks
 
@@ -145,7 +144,7 @@ There may exist hidden confounding variables that effect both the supposed cause
 
 **Example**: Experiments/Studies show a strong positive correlation between children reading skills and shoe size. Why are these two variables so correlated?
 
-![300](assets/lec4.4.png)
+<img src="assets/lec4.4.png" width="300">
 
 Here, Age is a the confounding variable. The hidden variable Age confounds the relationship between Shoe Size and Reading.
 
@@ -159,9 +158,8 @@ We intervene in the system to manipulate one variable and observe the effect on 
 
 ATE Measures the average effect of a treatment (in this case, shoe size) on an outcome (reading skills) across a population.
 
-$$
-\text{ATE} = \sum_A p (R | S = 1, A) p(A) - \sum_A p(R | S = 0, A) p(A)
-$$
+$$\text{ATE} = \sum_A p (R | S = 1, A) p(A) - \sum_A p(R | S = 0, A) p(A)$$
+
 By subtracting these sums, we obtain the ATE, which tells us the average effect of changing shoe size on reading skills, accounting for the distribution of age.
 
 If $\text{ATE} \approx 0$, then there is an indication that shoe size does not have a causal effect on reading skills. The observed correlation is explained by the confounding variable, age, which affects both shoe size and reading skills independently.
@@ -178,7 +176,7 @@ How do we choose a hypothesis that generalizes well? One that predicts unseen da
 
 #### Biase Variance Tradeoff:
 
-![500](assets/lec5.1.png)
+<img src="assets/lec5.1.png" width="500">
 
 **Bias**: If I have infinite data, how well can I fit the data with my learned hypothesis
 
@@ -199,24 +197,30 @@ A hypothesis with high variance
 
 Problems with high variance: overfitting
 
-![500](assets/lec5.2.png)
+<img src="assets/lec5.2.png" width="500">
 
 #### Bias Variance Equation
 
 Let $\hat{f} = \hat{f}(x; D)$
+
 $$
 \begin{align*}
 \text{MSE} = E_{D, E} [(y - \hat{f})^2] = (\text{Bias}_D [\hat{f}])^2 + \text{Var}(\hat{f}) + \sigma^2
 \end{align*}
 $$
+
 where
+
 $$
 \text{Bias}_D[\hat{f}] = E[\hat{f}] - f(x)
 $$
+
 $$
 \text{Var}_D[\hat{f}] = E(E[\hat{f}] - \hat{f}(x))
 $$
+
 Thus, overall
+
 $$\text{total error} = \text{bias} + \text{variance} + \text{irreducible noise}$$
 
 ![](assets/lec5.3.png)
@@ -240,7 +244,7 @@ In the end, we can either
 
 #### Overfitting
 
-![300](assets/lec5.4.png)
+<img src="assets/lec5.4.png" width="300">
 
 
 ### Unsupervised Learning
@@ -259,13 +263,17 @@ ICA is a unsupervised learning technique used to separate mixed signals into the
 **Example**: Cocktail party problem: listening in on one person's speech in a noisy room.
 
 Let's say we observe data $x_i(t)$. We can model it using hidden variables $s_i(t)$:
+
 $$x_i(t) = \sum_{j = 1}^m a_{ij} s_j(t) \quad\quad i = 1, \dots, n$$
+
 where we assume
 - the observed data $x$ has $n$ components 
 - there are $m$ independent sources
 
 or as a matrix decomposition
+
 $$X = AS$$
+
 where
 - $a_{ij}$, or the matrix $A$ is a constant parameter called the *mixing parameter*
 - $S$, or $s_j(t)$ are the hidden random factors, also called *independent components* or *source signals*
@@ -281,7 +289,7 @@ We estimate both $A$ and $S$ by observing $X$
 1. **Step Function**: $g(x)=1$ if $x > 0$ and $g(x)=0$ if $x < 0$
 	- Simple to use, but not differentiable
 
-![500](assets/lec6.2.png)
+<img src="assets/lec6.2.png" width="500">
 
 2. **Sigmoid Function**:  $g(x) = \dfrac{1}{1 + e^{-kx}}$
 	- For very large and very small $x$, $g(x)$ is close to $1$ or $0$
@@ -289,7 +297,7 @@ We estimate both $A$ and $S$ by observing $X$
 	- Differentiable
 	- Computationally Expensive
 
-![500](assets/lec6.3.png)
+<img src="assets/lec6.3.png" width="500">
 
 *Vanishing Gradient Problem*: when $x$ is very large or very small, $g(x)$ responds little to changes in $x$. The network does not learn further or learns very slowly
 
@@ -297,23 +305,25 @@ We estimate both $A$ and $S$ by observing $X$
 	- Computationally efficient - network converges quickly
 	- Differentiable
 
-![500](assets/lec6.4.png)
+<img src="assets/lec6.4.png" width="500">
 
 *Dying ReLU problem*:  When inputs approach $0$ or are negative, the gradient becomes $0$ and the model can't learn anything
 
 4. **Leaky ReLU**: $g(x) = \max(0, x) + k \cdot \min(0, x)$
 	- Small positive slope k in the negative area. Enables learning for negative input values
 
-![500](assets/lec6.5.png)
+<img src="assets/lec6.5.png" width="500">
 
 ### Convolutional Kernel
 
 - **stride (s)**: number of pixels to move
 - **padding (p)**: 
 - **filter (f)**: size of the kernel
+
 $$
 \text{Output dimensions} = \Bigg(\frac{i - f + 2p}{s} + 1\Bigg), \Bigg( \frac{j - f + 2p}{s} + 1 \Bigg)
 $$
+
 $$
 \text{Parameter Size} = \text{input channels} \times \text{kernel size} \times \text{output channels}
 $$
@@ -329,9 +339,11 @@ Thus, we have the following info:
 - kernel size $= 5$
 - $s = 1$
 - output channels $= 8$
+
 $$
 \text{Output dimensions} = \Bigg(\frac{32 - 5}{1} + 1\Bigg), \Bigg( \frac{32 - 5}{1} + 1 \Bigg) = (28), (28)
 $$
+
 $$
 \text{Parameter Size} = 3 \times 5 \times 5 \times 8 = 600
 $$
@@ -342,9 +354,11 @@ Thus, we have the following info:
 - $i = 28$, $j = 28$ (using the output dimensions of prev question as input dimensions)
 - kernel size $= 3$
 - $s = 2$
+
 $$
 \text{Output dimensions} = \Bigg(\frac{28 - 3}{2} + 1\Bigg), \Bigg( \frac{28 - 3}{2} + 1 \Bigg) = (13.5), (13.5) = (13, 13) \quad
 $$
+
 *round down since there is no padding*
 
 Since the depth is 16, the total number of neurons is $13 \times 13 \times 16 = 2704$
@@ -362,11 +376,12 @@ $y_t = f_Y(h_t)$
 $h_t = \tanh(W_{hh} h_{t - 1} + W_{xh} x_t)$
 $y_t = W_{hy} h_t$
 
-![450](assets/lec6.6.png)
+
+<img src="assets/lec6.6.png" width="450">
 
 #### Example: Modelling Language
 
-![500](assets/lec6.7.png)
 
-![500](assets/lec6.8.png)
+<img src="assets/lec6.7.png" width="500">
 
+<img src="assets/lec6.8.png" width="500">

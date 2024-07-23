@@ -1,5 +1,3 @@
-## cs 486: intro to ai
-
 ![](assets/cover.png)
 
 Stuff I can't remember / think is worth memorizing 🕺

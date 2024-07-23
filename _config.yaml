@@ -1,1 +1,9 @@
 remote_theme: sighingnow/jekyll-gitbook
+
+toc:
+  enabled: true
+  h_min: 1
+  h_max: 6
+
+kramdown:
+  toc_levels: 1..6

@@ -1,9 +1,10 @@
 remote_theme: avikam03/jekyll-gitbook
 
 toc:
-  enabled: true
-  h_min: 1
-  h_max: 6
+  enabled:       true
+  enabled_index: true
+  h_min:         1
+  h_max:         6
 
 kramdown:
   toc_levels: 1..6

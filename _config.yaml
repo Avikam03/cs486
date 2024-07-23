@@ -1,4 +1,4 @@
-remote_theme: sighingnow/jekyll-gitbook
+remote_theme: avikam03/jekyll-gitbook
 
 toc:
   enabled: true

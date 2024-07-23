@@ -1,4 +1,4 @@
-# cs 486: intro to ai
+## cs 486: intro to ai
 
 ![](assets/cover.png)
 
@@ -9,14 +9,14 @@ Stuff I can't remember / think is worth memorizing 🕺
 
 $$
 \begin{align*}
-P(A_n, A_{n - 1}, \ldots, A_2, A_1) &= \prod_{i = 1}^n P(A_i | A_{i - 1} \land \dots \land  A_1) \\
+P(A_n, A_{n - 1}, \ldots, A_2, A_1) &= \prod_{i = 1}^n P(A_i \mid A_{i - 1} \land \dots \land  A_1) \\
 &= P(A_n \mid A_{n-1}, A_{n-2}, \ldots, A_1) \cdot P(A_{n-1} \mid A_{n-2}, \ldots, A_1) \cdot \ldots \cdot P(A_2 \mid A_1) \cdot P(A_1) 
 \end{align*}
 $$
 
 ### Cool Bayes Rule trick
 
-Don't need to know $P(Y)$ to compute $P(X | Y)$. $P(Y)$ is simply a normalization constant. We can calculate $P(X | Y)$ and $P(\neg X | Y)$ and then normalize them to sum to $1$
+Don't need to know $P(Y)$ to compute $P(X \mid Y)$. $P(Y)$ is simply a normalization constant. We can calculate $P(X \mid Y)$ and $P(\neg X \mid Y)$ and then normalize them to sum to $1$
 
 ![](assets/lec2.1.png)
 
@@ -32,8 +32,8 @@ A universal approach
 ### Unconditional Independence
 
 $X$ and $Y$ are unconditionally independent if
-- $P(X | Y) = P(X)$ 
-- $P(Y | X) = P(Y)$
+- $P(X \mid Y) = P(X)$ 
+- $P(Y \mid X) = P(Y)$
 - $P(X \land Y) = P(X) \cdot P(Y)$
 
 need to make 4 comparisons
@@ -41,9 +41,9 @@ need to make 4 comparisons
 ### Conditional Independence
 
 $X$ and $Y$ are conditionally independent given $Z$ if
-- $P(X | Y \land Z) = P(X | Y)$
-- $P(Y | X \land Z) = P(Y | X)$
-- $P(X \land Y | Z) = P(X \land Y)$
+- $P(X \mid Y \land Z) = P(X \mid Y)$
+- $P(Y \mid X \land Z) = P(Y \mid X)$
+- $P(X \land Y \mid Z) = P(X \land Y)$
 
 need to make 8 comparisons
 
@@ -59,7 +59,7 @@ need to make 8 comparisons
 
 Representing the joint distribution
 
-$$P(X_n \land \dots \land X_1) = \prod_{i = 1}^n P(X_i | \text{Parents}(X_i))$$
+$$P(X_n \land \dots \land X_1) = \prod_{i = 1}^n P(X_i \mid \text{Parents}(X_i))$$
 
 ### Three Key Structures
 
@@ -124,7 +124,7 @@ There are a few scenarios to consider while checking for blocked undirected path
 - For each variable $X_i$ in order:
 	- Pick the smallest subset $\text{Parents}(X_i)$ from $X_1, \dots, X_{i - 1}$ such that given $\text{Parents}(X_i)$, $X_i$ is independent from all variables $\{X_1, X_2, \dots, X_n\} - \text{Parents}(X_i)$
 	- Create a link from each of $\text{Parents}(X_i)$ to $X_i$
-	- Compute table for $P(X_i | \text{Parents}(X_i))$
+	- Compute table for $P(X_i \mid \text{Parents}(X_i))$
 
 ### Important Notes about Bayesian Networks (from Alice Gao's videos)
 
@@ -158,7 +158,7 @@ We intervene in the system to manipulate one variable and observe the effect on 
 
 ATE Measures the average effect of a treatment (in this case, shoe size) on an outcome (reading skills) across a population.
 
-$$\text{ATE} = \sum_A p (R | S = 1, A) p(A) - \sum_A p(R | S = 0, A) p(A)$$
+$$\text{ATE} = \sum_A p (R \mid S = 1, A) p(A) - \sum_A p(R \mid S = 0, A) p(A)$$
 
 By subtracting these sums, we obtain the ATE, which tells us the average effect of changing shoe size on reading skills, accounting for the distribution of age.
 

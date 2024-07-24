@@ -1,5 +1,8 @@
 remote_theme: avikam03/jekyll-gitbook
 
+github_username: avikam03
+twitter_username: avikam03
+
 toc:
   enabled:       true
   enabled_index: true

@@ -1,6 +1,6 @@
 remote_theme: avikam03/jekyll-gitbook
 
-syntax_highlighter_style: molokai
+syntax_highlighter_style: github 
 
 github_username: avikam03
 twitter_username: avikam03

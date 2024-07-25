@@ -379,7 +379,251 @@ $y_t = W_{hy} h_t$
 
 #### Example: Modelling Language
 
+##### Training Stage
 
 <img src="assets/lec6.7.png" width="500">
 
+`vocabulary V=[h,e,l,o]`
+Thus, we pass input into our model character by character. We can one-hot encode each character. 
+**Example**: `h` corresponds to `enc = [1, 0, 0, 0]`
+
+We then feed it into the hidden layer, which produces an output.
+
+**Example**: `h` produces the output `[1.0, 2.2, -3.0, 4.1`, which encodes to a prediction of `o`. This prediction is wrong, since the correct next letter is `e`. Since we're doing training, the loss would be computed and used to adjust the model.
+
+##### Testing Stage
+
 <img src="assets/lec6.8.png" width="500">
+
+**Note**: Asked Prof. Wenhu about this in class. The numbers in this example/image don't seem to be accurate with the predictions :/ In general, we would predict the character with the max value after applying the softmax function
+
+
+## lec07 
+
+- amazing [yt vid](https://www.youtube.com/watch?v=NE88eqLngkg) for momentum, nestorv momentum, adagrad, rmsprop, adam
+
+## lec11
+
+### (More) Common Activation Functions
+
+#### Softmax
+
+Recall the sigmoid function
+$$h(a) = \frac{1}{1 + e^{-a}}$$
+The sigmoid function works only for 2 dimensions (binary classification). it takes a real value and outputs a value between 0 and 1.
+
+The softmax function on the other hand looks like this:
+$$h(a)_i = \dfrac{e^{a_i}}{\sum_j e^{a_j}}$$
+The softmax function is a generalization of the sigmoid function to several dimensions (multi-class classification). it takes a vector of real valued inputs and transforms them into a probability distribution (all between 0 and 1).
+
+#### Tanh (hyperbolic tangent)
+
+$$h(a) = \dfrac{e^a - e^{-a}}{e^a + e^{-a}}$$
+
+<img src="assets/lec11.1.png" width="500">
+
+#### Gaussian
+
+$$h(a) = e^{-0.5 \Bigg(\dfrac{a - \mu}{\sigma}\Bigg)^2}$$
+
+
+## lec17
+
+algorithms <3
+### Search Algorithms
+
+A search problem is defined by:
+- A set of states
+- An initial state
+- Goal state(s)
+- A Successor (neighbour) Function: How to go from one state to another
+- (Optionally) A cost associated with each action
+
+A solution to a search problem is a path going from the initial state to a goal state (optionally with the least cost).
+
+```python
+'''
+Pseudocode for a generic search algorithm
+	- graph search graph
+	- s     start node
+	- goal  function that returns true if reached goal state
+'''
+def search(graph, s, goal):
+	frontier = {"s"}
+
+	while frontier:
+		cur = frontier.remove() # assume we have some way to do this
+		if goal(cur):
+			return cur
+		for nbr in cur.neighbour: # obtain neighbours using successor function
+			frontier.append(nbr)
+
+	return NO_PATH_FOUND
+```
+
+### Depth First Search (DFS)
+
+- Treat frontier like a stack (LIFO)
+- Intuitively: Search one path to completion before trying another path. Backtrack to alternative if exhausted current path.
+#### Properties
+
+Useful Quantities:
+- **branching factor (b)**: average number of children a node can have
+- **maximum depth (m)**: of search tree
+- **depth (d)**: of the shallowest goal node.
+
+| Type                                                         | Complexity                       | Intuition                                                               |
+| ------------------------------------------------------------ | -------------------------------- | ----------------------------------------------------------------------- |
+| **Space Complexity**<br><br>(size of frontier in worst case) | $O(bm)$<br><br>linear in m       | remembers $m$ nodes in the current path, and $b$ siblings for each node |
+| **Time Complexity**                                          | $O(b^m)$<br><br>exponential in m | visits the entire search tree in the worst case                         |
+
+- DFS is NOT guaranteed to find a solution even if it exists. DFS will get stuck in an infinite path. This might happen because of cycles/loops in the graph, or simply because paths are infinitely long.
+- DFS is NOT guaranteed to return the optimal solution if it terminates. This is because it doesn't consider costs.
+
+#### When to use DFS
+- when space is restricted
+- when many solutions with long paths exist
+#### When to not use DFS
+- when there are infinite paths
+- when solutions are shallow
+- there are multiple paths to a node
+
+### Breadth First Search (BFS)
+
+- Treats frontier like a queue (FIFO)
+- Intuitively: selects first encountered node with the least edges used so far
+#### Properties
+
+| Type                                                         | Complexity                       | Intuition                                                       |
+| ------------------------------------------------------------ | -------------------------------- | --------------------------------------------------------------- |
+| **Space Complexity**<br><br>(size of frontier in worst case) | $O(b^d)$<br><br>exponential in d | must visit the top $d$ levels                                   |
+| **Time Complexity**                                          | $O(b^d)$<br><br>exponential in d | visits the entire search tree (up to level d) in the worst case |
+
+- BFS is guaranteed to find a solution if it exists
+- BFS is guaranteed to return an optimal solution if it terminates – assuming that all edges have the same cost. More generally, it is guaranteed to return the shallowest goal node.
+
+#### When to use BFS
+- when space isn't an issue
+- want a solution with lowest number of edges (shallowest)
+#### When to not use BFS
+- when all solutions are deep in the tree
+- problem is large and graph is dynamically generated 
+
+### Iterative Deepening Search (IDS)
+
+Combine the best parts of BFS and DFS to get IDS
+
+best part of DFS
+- needs less space: $O(bm)$
+best part of BFS
+- needs less runtime: $O(b^d)$
+- guaranteed to find solution if it exists
+
+#### How does it work?
+For each depth limit, perform DFS until the limit is reached.
+
+Note that we perform DFS from scratch each time, and don't retain any information from previous DFS runs for lesser depth limits.
+
+**Intuition**: To me, this seems like BFS, but it's not. It seems like we're just expanding everything level by level. However, in actuality, it is only BFS in the sense that it only traverses till a certain depth at a time. This is why IDS inherits time complexity from BFS. However, the problem with BFS is that the frontier is too large. DFS on the other hand has a small frontier. By performing DFS at each depth, we can ensure that our frontier has the same maximum size as that of DFS.
+
+#### Properties
+
+| Type                                                         | Complexity                                        | Intuition                                    |
+| ------------------------------------------------------------ | ------------------------------------------------- | -------------------------------------------- |
+| **Space Complexity**<br><br>(size of frontier in worst case) | $O(bd)$<br><br>linear in d<br>(like DFS)          | guaranteed to terminate at depth $d$         |
+| **Time Complexity**                                          | $O(b^d)$<br><br>exponential in d<br>(same as BFS) | visits all nodes up to level d in worst case |
+
+- IDS is guaranteed to find a solution if it exists (Same as BFS)
+- IDS is guaranteed to return an optimal solution if it terminates – assuming that all edges have the same cost. More generally, it is guaranteed to return the shallowest goal node (Same as BFS)
+
+#### When to use IDS
+- when space isn't an issue
+- want a solution with lowest number of edges (shallowest)
+#### When to not use IDS
+- when all solutions are deep in the tree
+- problem is large and graph is dynamically generated 
+
+## lec18
+
+### Heuristic Search
+
+Instead of picking states randomly, and not knowing if a state is better than another (like how uninformed search algorithms operate), it would be much more efficient to have some sort of heuristic to estimate how close a state is to a goal. This can help us find the optimal solution faster!
+
+#### Search Heuristic function
+A search heuristic $h(n)$ is an estimate of the cost of the cheapest path from node n to a goal node.
+
+Properties of good heuristics:
+- problem-specific
+- non-negative
+- $h(n) = 0$ is $n$ is a goal node
+- $h(n)$ must be easy to compute without search
+
+#### Cost function
+Suppose that we are executing a search algorithm and we have added a path ending at n to the frontier. $\text{cost}(n)$ is the actual cost of the path ending at n.
+
+### Lowest Cost First Search (LCFS)
+
+LCFS works by removing the path with the lowest cost $\text{cost}(n)$
+
+**Fun fact**: this is Dijkstra's algorithm :)
+
+| Property                     | Note                                                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Space, Time Complexity**   | Exponential. <br>LCFS examines a lot of paths to ensure that it returns the optimal solution first.                                        |
+| **Completeness, Optimality** | Yes, and yes under mild conditions<br>- The branching factor is finite<br>- The cost of every edge is bounded below by a positive constant |
+
+### Greedy Best First Search (GBFS)
+
+GBFS removes the path with the lowest heuristic value $h(n)$
+
+| Property                   | Note                                                 |
+| -------------------------- | ---------------------------------------------------- |
+| **Space, Time Complexity** | Exponential                                          |
+| **Complete**               | Not Complete. CBFS might get stuck in a cycle        |
+| **Optimal**                | Not Optimal. GBFS may return an unoptimal path first |
+
+### A* search
+
+Removes the path with the lowest cost + heuristic value: $f(n) = \text{cost}(n) + h(n)$
+
+| Property                     | Note                                                         |
+| ---------------------------- | ------------------------------------------------------------ |
+| **Space, Time Complexity**   | Exponential.                                                 |
+| **Completeness, Optimality** | Yes, and yes under mild conditions on the heuristic function |
+
+#### A* is optimal
+##### Theorem: Optimality of A*
+
+A* is optimal iff $h(n)$ is admissible
+
+##### Definition: Admissible Heuristic
+
+A heuristic $h(n)$ is admissible if it never overestimates the cost of the cheapest path from node $n$ to the goal node.
+
+##### Proof that A* is optimal
+
+Assume we have many paths in the frontier such that $C^* < C^n$
+$$(S \to G : C^{*}, \dots, S \to N : C^{n})$$
+Let there be a path $S \to N \to G$ (not in the frontier) that has cost $C'$ such that $C' < C^*$
+
+According to admissibility, $C^n < C' < C^*$.
+
+However, this contradicts our assumption that $C^* < C^n$. Thus, A* is optimal!
+
+##### A* is optimally efficient
+
+- Among all optimal algorithms that start from the same start node and use the same heuristic, A* expands the fewest nodes.
+- No algorithm with the same information can do better.
+- A* expands the minimum number of nodes to find the optimal solution.
+
+**Intuition for proof**: any algorithm that does not expand all nodes with $f(n) < C^*$ run the risk of missing the optimal solution. 
+
+TODO: write the contradiction proof
+
+### Designing an Admissible Heuristic
+
+1. Define a relaxed problem: Simplify or drop one of the existing constraints in the problem.
+2. Solve the relaxed problem without search
+3. The cost of the optimal solution to the relaxed problem is an admissible heuristic for the original problem.
+
+**Intuition**: The cost of the optimal solution for the easier problem should be lesser than the corresponding cost for the actual problem.

@@ -8,7 +8,8 @@ to
 
 also skip the first line of the file
 
-Copy any files from the assets directory in the extracted directory path to the current working directory's assets folder if they do not already exist.
+remove the current working directory's assets folder if it exists.
+copy the entire assets directory from the extracted directory path to the current working directory.
 """
 
 import os
@@ -21,17 +22,15 @@ def convert_md():
     assets_src_path = os.path.join(directory_path, 'assets')
     assets_dest_path = os.path.join(os.getcwd(), 'assets')
 
-     # Ensure the destination assets directory exists
-    os.makedirs(assets_dest_path, exist_ok=True)
 
-    # Copy files from source assets directory to destination assets directory
+    # Remove the destination assets directory if it exists
+    if os.path.exists(assets_dest_path):
+        shutil.rmtree(assets_dest_path)
+
+    # Copy the entire assets directory from source to destination
     if os.path.exists(assets_src_path):
-        for filename in os.listdir(assets_src_path):
-            src_file = os.path.join(assets_src_path, filename)
-            dest_file = os.path.join(assets_dest_path, filename)
-            if not os.path.exists(dest_file):
-                shutil.copy(src_file, dest_file)
-
+        shutil.copytree(assets_src_path, assets_dest_path)
+     
     with open(path, 'r') as f:
         lines = f.readlines()
     new_lines = []

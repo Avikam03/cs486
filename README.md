@@ -1,3 +1,4 @@
+
 ![](assets/cover.png)
 
 Stuff I can't remember / think is worth memorizing 🕺
@@ -505,6 +506,7 @@ Useful Quantities:
 #### When to use BFS
 - when space isn't an issue
 - want a solution with lowest number of edges (shallowest)
+
 #### When to not use BFS
 - when all solutions are deep in the tree
 - problem is large and graph is dynamically generated 
@@ -539,6 +541,7 @@ Note that we perform DFS from scratch each time, and don't retain any informatio
 #### When to use IDS
 - when space isn't an issue
 - want a solution with lowest number of edges (shallowest)
+
 #### When to not use IDS
 - when all solutions are deep in the tree
 - problem is large and graph is dynamically generated 
@@ -627,3 +630,286 @@ TODO: write the contradiction proof
 3. The cost of the optimal solution to the relaxed problem is an admissible heuristic for the original problem.
 
 **Intuition**: The cost of the optimal solution for the easier problem should be lesser than the corresponding cost for the actual problem.
+
+#### Desirable Heuristic Properties
+
+- Want it to be admissible
+- Want it to be (lesser but) as close to the true cost as possible
+- Want it to be very different for very different states
+
+#### Dominating Heuristic
+
+Given heuristics $h_1(n)$ and $h_2(n)$, we say that $h_2(n)$ dominates $h_1(n)$ if 
+- $(\forall n (h_2(n) \geq h_1(n)))$
+- $(\exists n (h_2(n) \geq h_1(n)))$
+
+**Theorem:**
+If $h_2(n)$ dominates $h_1(n)$, then A* using $h_2$ never expands more states than A* using $h_1$
+
+### Pruning
+
+#### Cycle Pruning
+
+- Whenever we find that we're following a cycle, stop expanding the path (and discard it)
+- Cycles are bad because they might cause the algorithm (eg: DFS) to not terminate. Exploring a cycle is also a waste of time since it can't be part of a solution
+
+<img src="assets/lec18.1.png" width="300">
+
+**Time Complexity**: linear to the path length
+
+#### Multi-Path Pruning
+
+- If we have already found a path to a node, we can discard other paths to the same node.
+- Cycle Pruning is a special case of Multi-Path Pruning. Following a cycle is *one way* to have multiple paths to the same node.
+
+<img src="assets/lec18.2.png" width="400">
+
+
+
+In this algorithm, visited nodes are added to the explored set. Paths that lead to an element in the explored set are still added to the frontier, they're just not explored. Thus, time complexity is good, but space complexity is bad!
+
+##### Problem
+
+- Multi-Path pruning says that we keep the first path to a node and discard the rest
+- What if the first path is not the least-cost path?
+- Can multi-path pruning cause a search algorithm to fail to find the optimal solution? Yes!
+
+##### Finding optimal solution with Multi-Path Pruning
+
+What if a subsequent path to n is shorter than the first path found?
+- Remove all paths from the frontier that use the longer path.
+- Change the initial segment of the paths on the frontier to use the shorter path.
+- **Make sure that we find the least-cost path to a node first.**
+
+##### When does Multi-Path Pruning not work?
+
+Let's assume our frontier looks like this:
+$$(s \to n, \dots, s \to n')$$
+
+Now, let's say that there exists a path through $n'$ to $n$ that has a lower $f$-value. Thus, we have
+
+$$
+\begin{align*}
+	h(n) + \text{cost}(n) &> h(n) + \text{cost}(n') + \text{cost}(n, n') \\
+	\text{cost}(n) - \text{cost}(n') &> \text{cost}(n, n')
+\end{align*}
+$$
+
+Now, since node $n$ is already explored, we already knew that
+
+$$
+\begin{align*}
+	h(n) + \text{cost}(n) &\leq h(n') + \text{cost}(n') \\
+	h(n') - h(n) &\geq \text{cost}(n) - \text{cost}(n')
+\end{align*}
+$$
+
+We can now combine these two equations to get
+
+$$
+h(n') - h(n) > \text{cost}(n, n')
+$$
+
+This is the only scenario in which multi-path pruning does not work.
+
+#### Consistent Heuristic
+
+We saw earlier that an admissible heuristic needs to satisfy:
+
+$$h(m) - h(g) \leq \text{cost}(m, g)$$
+
+To ensure that A* with multi-path pruning is optimal, we need a consistent heuristic function.
+
+For any two nodes $m$ and $n$,
+
+$$h(m) - h(n) \leq \text{cost}(m, n)$$
+
+The above restriction is hard to prove! An easier restriction is as follows:
+
+A consistent heuristic satisfies the monotone restriction (**iff**)
+
+For any edge from $m$ to $n$
+$$
+h(m) - h(n) \leq \text{cost}(m, n)
+$$
+
+- Most admissible heuristic functions are consistent.
+- It’s challenging to come up with a heuristic function that is admissible but not consistent
+
+## lec19
+
+### Generate-and-Test algorithm
+
+- brute force: try all possible assignments
+- not scalable, and unnecessarily expensive
+
+**Why is this algorithm bad?**
+- It is bad because some constraints can be verified with partial states being generated
+- Search algorithms are unaware of the internal structure of states. Knowing a state's internal structure can help to solve a problem much faster.
+
+### Constraint Satisfaction Problem (CSP)
+
+Each state contains
+- A set of $X$ variables $\{ X_1, X_2, \dots, X_n \}$
+- A set of $D$ domains: $D_i$ is the domain for variable $X_i$, $\forall i$ 
+- A set $C$ of constraints specifying allowable value combinations
+
+A solution is an assignment of values to all the variables that satisfy all the constraints
+
+**Example**: See slides for $4$ queens state representation
+
+### Solving a CSP
+
+#### Backtracking Search
+
+<img src="assets/lec19.1.png" width="500">
+
+#### Arc Consistency Definition
+
+**Intuition**: Some states might not lead to a valid solution despite being valid in the current state. How do we recognize this earlier on?
+
+First, note that we:
+- Only consider binary constraints 
+- Unary constraints are straight forward to handle – simply remove all invalid values from the domain
+- For constraints having 3 or more variables, we would convert them to a binary constraint
+	- (beyond scope of this course)
+
+
+**Definition of Arc:**
+$X$ and $Y$ are 2 variables. $c(X, Y)$ is a binary constraint.
+
+<img src="assets/lec19.2.png" width="500">
+
+$\langle X, c(X, Y) \rangle$ denotes an arc, where $X$ is the primary variable and $Y$ is the secondary variable
+
+**Definition of Arc Consistency**:
+An arc $\langle X, c(X, Y) \rangle$ is consistent iff for every value $v \in D_X$, there exists a value $w \in D_Y$ such that $(v, w)$ satisfies the constraint $c(X, Y)$
+
+#### AC-3 Arc Consistency Algorithm
+
+Remember that each constraint has 2 arcs. We will put both arcs in $S$
+
+<img src="assets/lec19.3.png" width="500">
+
+**After reducing a variable's domain, why do we add back constraints into $S$**?
+This is because reducing a variable's domain may cause a previously consistent arc to become inconsistent
+
+##### Properties
+- The order of removing arcs is not important
+- Three possible outcomes of the arc consistency algorithm:
+	- Domain is empty: no solution
+	- Every domain has 1 value left: found the solution without search
+	- Every domain has at least 1 value left and some domain has multiple values left: need search to find a solution.
+		- This case is inconclusive. it may mean that the problem has
+			- multiple solutions
+			- a unique solution
+			- no solutions
+- Guaranteed to terminate
+- $O(cd^3)$ time complexity
+	- $n$ variables, $c$ binary constraints, and the size of domains is at most $d$
+	- each arc $(X_k, X_i)$ can be added to $S$ at most $d$ times, since we can only delete at most $d$ values from $X_i$
+	- Checking consistency of each arc can be done in $O(d^2)$ time 
+
+#### Backtracking + Arc Consistency
+
+1. Perform backtracking search
+2. After each assignment, test for arc consistency
+3. If a domain is empty, terminate and return no solution
+4. If a unique solution is found, return the solution
+5. Otherwise, continue with backtracking search on the unassigned variables
+
+## lec21
+
+### Unsupervised Learning
+
+2 major types of tasks:
+
+- **Representation Learning**
+	- Transforms high-dimensional data into a lower dimensional space while preserving essential characteristics and structures of the data. The resulting embeddings/features can improve efficiency in subsequent tasks.
+- **Generative Modelling**: 
+	- Aims to understand and simulate the distribution of data by learning its probability distribution. This allows it to generate new examples that are similar to the original dataset.
+
+#### Clustering
+
+Clustering is a common unsupervised representation learning task
+
+2 types of clustering tasks:
+
+- **Hard clustering**: each example is assigned to 1 cluster with certainty
+- **Soft clustering**: each example has a probability distribution over all clusters
+
+### k-means clustering
+
+- hard clustering algorithm
+
+#### Algorithm
+
+**Input**: $X \in R^{m \times n}$, $k \in N$, $d(c, x)$
+- $m$ points with $n$ features each
+
+**Initialization**: Randomly initialize $k$ centroids: $C \in R^{k \times n}$
+
+**While not converged**:
+- Assign each example to the cluster whose centroid is closest
+	- $Y[i] = \arg \min_c d(C[c], X[i])$
+- Calculate the centroid for each cluster $c$ by calculating the average feature value for each example currently classified as cluster $c$
+	- $C[c] = \dfrac{1}{n_c} \sum_{j = 1}^{n_c} X_c[j]$
+
+
+Note: If while performing the algorithm we reach a point where no points are assigned to a centroid, then we will have to re-initialize the centroid. this can be done by either picking a new random point from the dataset as the centroid, or some other strategies.
+
+#### Properties
+
+- Guaranteed to converge (if using L2/Euclidean distance)
+- Not guaranteed to give optimal solution
+
+To increase chances of finding a better solution, can try
+- running algo multiple times with different random initial cluster assignments
+- scaling the features so that their domains are similar
+
+The choice of $k$ determines the outcome of clustering
+- If there are $\leq k + 1$ examples, running k-means with $k + 1$ clusters results in lower error than running with $k$ clusters.
+- using too large of a $k$ defeats the purpose of clustering...
+
+#### Elbow Method
+
+- Execute k-means with multiple values of $k in \{ 1, 2, \dots, k_{\text{max}} \}$
+- Plot average distance across all examples and assigned clusters
+- Select $k$ where there is a drastic reduction in error improvement on the plot (i.e elbow point)
+
+<img src="assets/lec21.1.png" width="200">
+
+#### Silhouette Analysis
+
+- Execute k-means with multiple values of $k in \{ 1, 2, \dots, k_{\text{max}} \}$
+- Calculate average silhouette score $s(x)$ for each $k$ across the dataset
+- Select $k$ that maximizes average $s(x)$
+
+$$
+s(x) = \begin{cases}
+   \dfrac{b(x) - a(x)}{\max(a(x), b(x))} &\text{if } \vert C_x \vert > 1 \\
+   0 &\text{if } \vert C_x \vert = 1
+\end{cases}
+$$
+- $a(x)$ is the average distance from example $x$ to all other examples in its own cluster (internal cluster difference)
+- $b(x)$ is the smallest of the average distance of $x$ to examples in any other cluster (smallest avg distance from one other cluster)
+
+
+### Dimensionality Reduction
+
+Dimensionality reduction aims to reduce the number of attributes in a dataset while keeping as much of the variation in the original dataset as possible
+- high dimensional data actually resides in an inherent low-dimensional space
+- additional dimensions are just random noise
+- goal is to recover these inherent dimension and discard noise dimension
+
+The observed data point dimensionality is not necessarily the intrinsic dimension of the data.
+
+Finding intrinsic dimension makes problems simpler
+
+#### Principal Component Analysis (PCA)
+
+- method for unsupervised dimensionality reduction
+- account for variance of data in as few dimensions
+- 1st PC is the axis against which the variance of projected data is maximized
+- 2nd PC is an axis orthogonal to the 1st PC, such that the variance of projected data is maximized
+

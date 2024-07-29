@@ -1,8 +1,6 @@
 
 ![](assets/cover.png)
 
-Stuff I can't remember / think is worth memorizing 🕺
-
 ## lec2
 ### Calculate Joint Probability Using the Chain Rule
 
@@ -399,9 +397,184 @@ We then feed it into the hidden layer, which produces an output.
 **Note**: Asked Prof. Wenhu about this in class. The numbers in this example/image don't seem to be accurate with the predictions :/ In general, we would predict the character with the max value after applying the softmax function
 
 
-## lec07 
+## lec7
 
 - amazing [yt vid](https://www.youtube.com/watch?v=NE88eqLngkg) for momentum, nestorv momentum, adagrad, rmsprop, adam
+
+
+
+## lec9
+
+3 main paradigms in machine learning:
+- Supervised Learning
+- Unsupervised Learning 
+- Reinforcement Learning
+
+**Reinforcement Learning**: Learn to choose actions that maximize rewards
+
+<img src="assets/lec9.1.png" width="400">
+
+### Markov Decision Process (MDP)
+
+MDP is framework to model reinforcement learning problems. It has the following components
+
+<img src="assets/lec9.2.png" width="350">
+
+note: horizon is the number of time steps our agent will select actions for
+
+#### Common Assumptions 
+- made to simplify things
+
+- **Transition Model**
+	- Markovian: $\Pr(s_{t + 1} \mid s_{t}, a_{t}, s_{t - 1}, a_{t - 1}, \dots) = \Pr(s_{t + 1} \mid s_t, a_t)$
+	- Stationary: $\Pr(s_{t + 1} \mid s_t, a_t)$ is the same for all $t$
+- **Reward Model**
+	- Stationary: $R(s_t, a_t)$ is the same for all $t$
+	- Exception: Terminal reward is often different. In a game of go for example, reward at each step is 0 and reward at the end based on win/lose is +1/-1.
+
+#### Discounted Rewards
+
+**Intuition**: The goal is to maximize rewards. However, we prefer to earn rewards earlier than later.
+
+- **Discounted Rewards**
+	- Pick discount factor $0 < \gamma < 1$
+	- Leads us to obtaining finite utility: $\sum_t \gamma^t R(s_t, a_t)$
+	- discount factor $\gamma$ induces an inflation rate of $\dfrac{1}{\gamma} - 1$
+- **Average Rewards**
+	- complicated to compute. not in scope of course
+
+#### Policy and Policy Optimization
+
+Function that returns action given state
+
+$$\pi(s_t) = a_t$$
+
+**Key Assumption**: Assumes states are fully observable (has ALL possible information needed to make decision). This is hard to pull off in practice. Example: Tesla FSD is unlikely to have literally *all* information it needs. It works with partially observable states.
+
+Our goal is to find the best possible policy – one that gives us the *best* results. How do we evaluate how good a policy is though? How do we optimize our policy? We can do this by computing expected utility
+
+**Expected Utility** is given by
+
+$$
+V^\pi (s_0) = \sum_{t = 0}^h \gamma^t \sum_{s_{t + 1}} \Pr(s_{t + 1} \mid s_0, \pi) \cdot R(s_{t + 1}, \pi(s_{t + 1}))
+$$
+This is essentially an objective measure for how good the policy is. 
+
+Explanation for why we need to sum of all possible timestamps if the initial state is the same. Isn't this pointless if we're summing the same thing again but scaled differently? No. $\pi$ is not stationary. it is time dependent and changes with each time step. Thus, we need to consider the *expected* utility over all time steps.
+
+The **optimal policy** here would be $\pi^*$ where $V^{\pi^*}(s_0) \geq V^{\pi}(s_0)$ for all other $\pi$
+
+#### Value Iteration
+
+Implement computing expected utility as a dynamic programming problem. This works by starting from the end (last time stamp), and working our way back. see slides for derivation.
+
+**Bellman's equation**
+
+$$
+\begin{align*}
+	V^*_\infty (s_t) &= \max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^*_\infty (s_{t + 1}) \\
+	a^*_t &= \arg\max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^*_\infty (s_{t + 1})
+\end{align*}
+$$
+
+<img src="assets/lec9.3.png" width="500">
+
+**Note**: $\pi^*$ is not stationary, and depends on the current time step/iteration
+
+#### Horizon
+
+- **Finite horizon**
+	- non-stationary optimal policy: best action different at each time step
+	- intuition: best action differs with amount of time left
+- **Infinite horizon**
+	- stationary optimal policy: same best action at each time step
+	- intuition: same amount of time left at each time step
+	- assuming a discount factor $\gamma$, after a large enough amount of steps, $\gamma^n \to 0$. can solve this problem by using one of two strategies
+		- pick a large enough $n$ and run value iteration for $n$ steps
+		- pick $\epsilon$ tolerance, and run till $\parallel V_n - V_{n - 1} \parallel_\infty \leq \epsilon$
+
+## lec10
+
+In practice, it is not easy to know the transition and reward model. This is because the environment might be too hard to model accurately (example: inverted pendulum problem in slides). But that's okay. We have access to samples that follow the transition and reward model probabilities. Thus, we can simply observe samples and estimate different things.
+
+We can classify RL Agents depending on what they estimate:
+
+![](assets/lec10.1.png)
+
+### Q-learning
+
+In Q-learning is a model-free reinforcement learning technique. It estimates policies and value function, and doesn't need an explicit model of the environment (transition + reward models).
+
+Let's try to derive this from what we already know about Value Iteration and Bellman's equation
+
+$$
+V^*_n (s_t) = \max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^*_{n - 1} (s_{t + 1})
+$$
+
+We can rewrite this as
+
+$$
+V^*_n (s) = \max_{a} E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot V^*_{n - 1} (s')
+$$
+Further, when $n \to \infty$
+
+$$
+V^* (s) = \max_{a} E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot V^* (s')
+$$
+
+Now, instead of considering only state, let us consider state action pairs
+
+$$
+Q^* (s, a) = E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot \max_{a'} Q^* (s', a')
+$$
+
+where $V^*(s) = \max_a Q^*(s, a)$ and $\pi^*(s) = \arg\max_a Q^*(s, a)$
+
+The $Q^*$ function quantifies the quality of executing some action in some state, unlike Bellman's equation, which only gives us the best quality obtainable from some state.
+
+However, note that our Q-function still uses probabilities that we don't have access to. We need to get rid of it *somehow*. If we consider the second term of the equation, it is essentially the weighted average of Q values. How can we approximate this average? An intuitive way would be to take the average of lesser samples. An even more crude approximation is to simply take one of the values. This is called **one sample approximation**.
+
+$$
+\begin{align*}
+Q^* (s, a) &= E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot \max_{a'} Q^* (s', a') \\
+&\approx r + \gamma \cdot \max_{a'} Q^* (s', a') \\
+\end{align*}
+$$
+
+We can now take the difference we were going to update $Q^*$ by (RHS - LHS) and scale it (by a learning rate) to update $Q^*$
+
+$$
+Q^*_n(s, a) = Q^*_{n - 1}(s, a) + \alpha_n (r + \gamma \cdot \max_{a'} Q^*_{n - 1}(s', a') - Q^*_{n - 1}(s, a))
+$$
+
+where $\alpha_n$ is our learning rate
+
+#### Tabular Q-learning Algorithm
+
+![](assets/lec10.2.png)
+
+#### Convergence
+
+Despite doing one-sample approximation, Q-learning converges to optimal Q values if
+- Each state is visited infinitely enough (due to exploration)
+- The action selection becomes greedy as time $\to \infty$
+- The learning rate is decreased fast enough, but not too fast
+	- $\sum_t a_t \to \infty$ and $\sum_{t} a_t^2 < \infty$
+	- note that the learning rate in the tabular q-learning algorithm satisfies these conditions
+
+#### Exploration Methods
+
+- **$\epsilon$-greedy** 
+	- with probability $\epsilon$, execute a random action
+	- otherwise, execute best action $a^* = \arg\max_a Q(s, a)$
+- **Boltzmann exploration**
+	- increasing temperature $T$ increases stochasticity
+	- $$\Pr(a) = \dfrac{e^{\dfrac{Q(s, a)}{T}}}{\sum_a e^{\dfrac{Q(s, a)}{T}}} \quad \text{(softmax activation fn)}$$
+	- raised to the power of $e$ since rewards might be negative, and we don't want probability to be negative :)
+	- High Temperature ($T \to \infty$): formula approaches uniform distribution
+	- Low Temperature ($T \to 0$): Action with highest Q-value becomes more likely (best action more likely, less exploration)
+
+
 
 ## lec11
 
@@ -426,6 +599,615 @@ $$h(a) = \dfrac{e^a - e^{-a}}{e^a + e^{-a}}$$
 #### Gaussian
 
 $$h(a) = e^{-0.5 \Bigg(\dfrac{a - \mu}{\sigma}\Bigg)^2}$$
+
+### Q-function approximation
+
+**Universal Function Approximator (Theorem)**: Neural networks with at least one hidden layer of sufficiently many sigmoid/tanh/Gaussian units can approximate any function arbitrarily closely.
+
+![](assets/lec11.2.png)
+
+
+Let $s = (x_1, x_2, \dots, x_n)^T$. We can now estimate the q-function using the following methods
+
+- **Linear Approximation**:  $Q(s, a) \approx \sum_{i} w_{ai} x_i$
+	- this has been popular for many years. works well for simple functions
+- **Non-linear Approximation** (using a neural network): $Q(s, a) \approx g(x; w)$
+	- neural networks are better than linear approximations in most cases – because they can be used to approximate anything
+
+### Gradient Q-learning
+
+Gradient Q-learning is a variant of Q-learning where we use gradient step. It is a way of adapting the original Q-learning algorithm to use function approximation and perform updates by taking steps in the direction of the gradient.
+
+We can try by minimizing the squared error between Q-value estimate and target
+- **Q-value estimate**: $Q_w(s, a)$
+- **Target**: $r + \max_{a'} \gamma \cdot Q_{\bar{w}}(s', a')$
+
+**Squared Error**: $\text{Err}(w) = \dfrac{1}{2} (Q_w(s, a) - r  \max_{a'} \gamma \cdot Q_{\bar{w}}(s', a'))^2$
+**Loss**: $\dfrac{\delta \text{Err}}{\delta w} = (Q_w(s, a) - r - \max_{a'} \gamma \cdot Q_{\bar{w}}(s', a')) \dfrac{\delta Q_w(s, a)}{\delta w}$
+
+We treat $w$ as a variable, and $\bar{w}$ as a constant (since we fixed it).
+
+Intuitively, we want to update the estimate based on the target. But how can we do this if our target itself depends on the estimate $w$. Thus, we fix the target's $w$ so that the target is constant and not moving.
+
+<img src="assets/lec11.3.png" width="550">
+
+#### Convergence of Gradient Q-learning
+
+##### Linear Gradient Q-learning
+
+Linear gradient q-learning converges under the same conditions as tabular q-learning:
+$\sum_t a_t \to \infty$ and $\sum_{t} a_t^2 < \infty$
+
+where $a_t = \dfrac{1}{t}$ and $Q_w(s, a) = \sum_i w_i x_i$
+
+##### Non-linear Gradient Q-learning
+
+Under the same conditions as above, non-linear gradient q-learning may diverge!
+
+**Intuition**: Adjusting $w$ to increase $Q$ at $(s, a)$ might introduce errors at nearby state-action pairs.
+
+This doesn't happen in the linear case since because the weights are a hyperplane, they are well defined. Researchers have been able to so that even though errors are introduced as we modify the weights for particular state action pairs, it gets compensated by some other updates, and overall, the method does not lead to divergence.
+
+### Mitigating Divergence
+
+Divergence can be mitigated using the following two methods
+- Experience Replay
+- Using 2 Networks: Q-network and Target network
+
+#### Experience Replay
+
+**Idea**: store previous experiences $(s, a, s', r)$ into a buffer and sample a mini-batch of previous experiences at each step to learn by Q-learning
+
+**Advantages**
+- Break correlations between successive updates (more stable learning)
+- Less interactions with environment needed to converge (better data efficiency)
+
+**Intuition**:
+- The idea here is to counter any errors that the new update might have introduced
+- This is similar to supervised learning – where new updates might make the weights worse for older data points. This is why we replay previous data again through multiple epochs
+- Successive updates might be looking at a similar region - and might be oblivious of the bad changes they’re making in other regions. Experience replay helps prevent that through the buffer 
+
+This solution alone is not sufficient to guarantee convergence - but it does help a lot!
+
+#### Using 2 Networks
+
+Use a separate target network which is only updated periodically. We also use mini-batches of state-action pairs. For each $(s, a, s', a')$ in the same mini-batch, we update our q-learning estimate network with the same constant target network. Once we're done iterating over all examples in the mini-batch, we update the target network for the next mini-batch to use
+
+<img src="assets/lec11.4.png" width="450">
+
+### Deep Q-network (DQN)
+
+Combines Gradient Q-learning with
+- Deep Neural Networks
+- Experience Replay
+- 2 Networks (target + estimate)
+
+DQN has been revolutionary – leading to human-level play in many Atari video games
+
+<img src="assets/lec11.5.png" width="600">
+
+## lec12
+
+Q-learning is a model-free value based method. It stores an explicitly representation of the policy.
+
+Let us now look at a method called **Policy Gradient**, which is a model-free policy based method. Unlike Q-learning, it explicitly stores a representation of the value function and instead estimates the policy.
+
+### Stochastic Policy
+
+Consider the stochastic policy $\pi_\theta(a \mid s) = \Pr(a \mid s; \theta)$, parameterized by $\theta$ (weights).
+
+If we consider finitely many discrete actions, we can calculate stochastic policy using softmax:
+
+$$\pi_\theta(a \mid s) = \dfrac{\exp(h(s, a, \theta))}{\sum_{a'}\exp(h(s, a', \theta))}$$
+
+where $h(s, a, \theta)$ is either
+- linear in $\theta$: $h(s, a, \theta) = \sum_{i} \theta_i f(s, a)$
+	- here, $\theta$ is a vector of weights that linearly combines the features to produce a preference score for each action
+- non-linear in $\theta$: $h(s, a, \theta) = \text{NeuralNet}(s, a; \theta)$
+	- here, $\theta$ represents the weights and biases of all the layers in the neural network
+
+On the other hand, if we consider continuous actions, we can calculate stochastic policy using gaussian distribution:
+
+$$N(a \mid \mu(s, \theta), \sum(s; \theta))$$
+
+#### Supervised Learning
+
+Data: $\{ (s_1, a_1^*), (s_2, a_2^*), \dots \}$ where $a*$ is the optimal action
+
+Our goal is to maximize the log likelihood of the data:
+
+$$
+\theta^* = \arg \max_{\theta} \sum_{n} \log\pi_{\theta}(a_n^* \mid s_n)
+$$
+
+Gradient updates are then done as follows:
+
+$$\theta_{n + 1} = \theta_{n} + a_n \nabla_\theta \log \pi_\theta(a_n^* \mid s_n)$$
+
+#### Reinforcement Learning
+
+Data: $\{ (s_1, a_1, r_1), (s_2, a_2, r_2), \dots \}$ 
+
+Our goal is to maximize discounted sum of rewards:
+
+$$
+\theta^* = \arg \max_\theta \sum_n \gamma^n E[r_n \mid s_n, a_n]
+$$
+
+Note that this is basically the value function $V_\theta$
+
+We claim that the gradient of this expression is similar to the gradient obtained in supervised learning.
+
+$$\theta_{n + 1} = \theta_{n} + a_n \gamma^n G_n \nabla_\theta \log \pi_\theta(a_n^* \mid s_n)$$
+
+where $G_n = \sum_{t = 0}^\infty \gamma^t \cdot r_{n + t}$
+
+Omitting derivation of gradient^. Check Slides for more details. Prof. Pascal mentioned in class steps of the derivation aren't that important to understand.
+
+#### REINFORCE Algorithm
+
+<img src="assets/lec12.1.png" width="550">
+
+### AlphaGo
+
+AlphaGo was trained using 4 steps:
+1. Supervised Learning of Policy Networks
+2. Policy gradient with Policy Networks 
+3. Value gradient with Value Networks
+4. Searching with Policy and Value Networks (MCTS)
+
+### Large Language Models (LLMs)
+
+TODO
+
+#### Reward Model
+
+Let $s$ be the user prompt, and $a$ be the system response. 
+reward function: $r_\theta(s, a) =$ real number
+consider several responses ranked by a human annotator $a_1 \succcurlyeq a_2 \succcurlyeq \dots a_k$
+
+we can then train our reward function using a loss function – so that it is consistent with rankings
+
+<img src="assets/lec12.2.png" width="600">
+
+**Intuition**: we want to maximize the difference between each pair of rewards
+
+The end goal is to train with enough examples to end up with a reward model so good that we can query it for a new $(s, a)$ pair for which we don't have rankings available from a human annotator. We can then obtain the best possible guess of reward for that state-action pair.
+
+#### Reinforcement Learning / Policy Gradient
+
+- Pretrain language model (GPT-3)
+- Fine-Tune GPT-3 by RL to obtain InstructGPT
+	- Policy (language model): $\pi_\phi(s) = a$
+	- Optimize $\pi_\phi(s)$ by policy gradient (Proximal Policy Optimization (PPO))
+
+<img src="assets/lec12.3.png" width="500">
+
+Here, $\pi_\phi$ is InstructGPT, and $\pi_{\text{ref}}$ is GPT-3. There is also a regularizer which prevents overfitting
+
+
+## lec13
+
+So far, we have seen multiple ways of balancing exploitation and exploration: $\epsilon$-greedy, greedy strategy, etc. In this lecture, we'll go over some new ways.
+
+To do so, let us consider a new type of problem: **Bandits**. Bandits are one state RL problems – formally defined as follows:
+- Single state: $S = \{s\}$
+- Actions (also known as arms): $A =$ set of actions
+- Rewards (often scaled to be $[0, 1]$)
+
+There is no transition function to be learned since there is just one state! We simply need to learn the stochastic reward function
+
+### Regret
+
+- Let $R(a)$ be the average reward of $a$
+- Let $r^* = \max_a R(a)$ and $a^* = \arg \max_a R(a)$
+- Denote by $\text{loss}(a)$ the expected regret of $a$
+	- $\text{loss}(a) = r^* - R(a)$
+- Denote by $\text{Loss}_n$ the expected cumulative regret for $n$ time steps
+	- $\text{Loss}_n = \sum_{t = 1}^n \text{loss}(a_t)$
+
+
+We have the following theoretical guarantees:
+- When $\epsilon$ is constant, then
+	- For large enough $t$, $\Pr(a_t \neq a^*) \approx \epsilon$ (select random action not greedy/optimal with probability $\epsilon$)
+	- Expected cumulative regret: $\text{Loss}_n \approx \sum_{t = 1}^n \epsilon = O(n)$
+		- Linear regret
+		- We only have regret when we choose a non optimal action. We assume here that optimal reward = 1, suboptimal reward = 0
+- When $\epsilon_t \propto \dfrac{1}{t}$
+	- For large enough $t$, $\Pr(a_t \neq a^*) \approx \epsilon_t = O(\dfrac{1}{t})$
+	- Expected cumulative regret: $\text{Loss}_n \approx \sum_{t = 1}^n \dfrac{1}{t} = O(\log n)$
+		- Logarithmic regret
+
+### Multi-armed bandits
+
+Our distribution of rewards for a particular action can be given by $\Pr(r \mid a)$
+- Expected Reward (true mean): $R(a) = E(r \mid a)$
+- Empirical average reward: $\tilde{R}(a) = \dfrac{1}{n} \sum_{t}^n r_t$
+
+We want to figure out how far empirical mean $\tilde{R}(a)$ is from the true mean $R(a)$. It works if we can find a bound such that $\vert R(a) - \tilde{R}(a) \vert \leq \text{bound}$. Then, we would know that $R(a) < \tilde{R}(a) + \text{bound}$, and we can select the arm with the best $\tilde{R}(a) + \text{bound}$.
+
+Moreover, the more data we have, the tighter bound we can compute.
+
+Let's assume that we have an oracle that returns an upper bound $\text{UB}_n(a)$ on $R(a)$ for each arm based on $n$ trials of arm $a$. Assume the upper bound returned by this oracle converges to $R(a)$, i.e, $\lim_{n \to \infty} \text{UB}_n (a) = R(a)$
+
+For bandits, being positive is a good approach! Thus, an optimistic algorithm is to select $\arg \max_a \text{UB}_n(a)$ each step.
+
+**Theorem**: An optimistic strategy that always selects $\arg \max_a \text{UB}_n(a)$ will converge to $a^*$
+
+#### Probabilistic Upper Bound
+
+We assumed earlier that we can use an oracle to obtain the upper bound. This isn't practical though. There is no way to compute an upper bound with certainty since we are sampling.
+
+However, using some stats, we can obtain a good enough upper bound
+
+**Hoeffding's inequality**:
+
+$$
+\Pr\Bigg(R(a) \leq \tilde{R}(a) + \sqrt{\dfrac{\log(\dfrac{1}{\delta})}{2n_a}}\Bigg) \geq 1 - \delta
+$$
+
+#### Upper Confidence Bound (UCB)
+
+Set $\delta_n = \dfrac{1}{n^4}$ in Hoeffding's inequality. Choose $a$ with highest hoeffding bound
+
+<img src="assets/lec13.1.png" width="350">
+
+As time goes by:
+- Probability that the bound does not hold decreases
+- Bound increases
+
+**Theorem**: Although Hoeffding's bound is probabilistic, UCB converges!
+**Intuition**: As $n$ increases, the term $\sqrt{\dfrac{2 \log{n}}{n_a}}$ increases. This ensures all arms are tried infinitely often
+Expected cumulative regret: $\text{Loss}_n = O(\log{n})$ (logarithmic regret)
+
+
+#### Thompson Sampling
+##### Bayesian Learning
+
+- $r^a$: random variable for $a$'s rewards
+- $Pr(r^a, \theta)$: unknown distribution (parameterized by $\theta$)
+- $R(a) = E[r^a]$: unknown average reward
+
+Since we don't know $\theta$, let's try to approximate it. We can express uncertainty about $\theta$ by a prior $\Pr(\theta)$
+
+We can compute the posterior distribution $\Pr(\theta \mid r_1^a, r_2^a, \dots, r_n^a)$ based on samples $r_1^a, r_2^a, \dots r_n^a$ observed for $a$ so far. We can compute it using Bayes theorem
+
+$$\Pr(\theta \mid r_1^a, r_2^a, \dots, r_n^a) \propto \Pr(\theta) \cdot \Pr(r_1^a, r_2^a, \dots, r_n^a \mid \theta)$$
+
+Once we have our posterior distribution, we want to estimate the next reward we could obtain if we choose an action $a$
+
+We can estimate the distribution over the next reward $r^a$ as follows:
+
+$$\Pr(r^a \mid r_1^a, r_2^a, \dots, r_n^a) = \int_\theta \Pr(r^a; \theta) \cdot \Pr(\theta \mid r_1^a, r_2^a, \dots, r_n^a) \cdot d\theta$$
+
+this equation essentially marginalizes $\theta$ (gets rid of it by summing it up)
+
+We can also estimate the distribution over $R(a)$ when $\theta$ includes the mean
+
+$$\Pr(R(a) \mid r_1^a, \dots r_n^a) = \Pr(\theta \mid r_1^a, \dots, r_n^a)$$
+
+if $\theta = R(a)$
+
+TODO: don't understand this part about guiding exploration
+
+##### Bernoulli Variables
+
+Consider two biased coins $C_1$ and $C_2$. 
+Let us also model the rewards  $r^{C_1}$ and $r^{C_2}$ as bernoulli variables with domain $\{0, 1\}$. Bernoulli distributions are usually parameterized by their mean
+- $R(C_1) = \Pr(C_1 = \text{head})) = \Pr(r^{C_1}, \theta_1) = \theta_1$
+- $R(C_2) = \Pr(C_2 = \text{head})) = \Pr(r^{C_2}, \theta_2) = \theta_2$
+
+We want to maximize # of heads in $k$ flips. Which coin should we pick?
+
+Let the prior $\Pr(\theta)$ be a Beta distribution. Yes, this is a distribution over a distribution (second order distribution).
+- $\Pr(\theta) = \text{Beta}(\theta; \alpha, \beta) \propto \theta^{\alpha - 1} (1 - \theta)^{\beta - 1}$
+- where $\alpha - 1$  is number of heads, $\beta - 1$ is number of tails
+- $E[\theta] = \dfrac{\alpha}{\alpha + \beta}$ 
+
+Posterior after coin flip is given by
+
+$$
+\begin{align*}
+\Pr(\theta \mid \text{head}) &\propto \Pr(\theta) \cdot \Pr(\text{head} \mid \theta) \\
+&\propto \theta^{\alpha - 1} (1 - \theta)^{\beta - 1} \cdot \theta \\
+&= \theta^{(\alpha + 1) - 1} (1 - \theta)^{\beta - 1} \cdot \theta \propto \text{Beta}(\theta; \alpha + 1, \beta)
+\end{align*}
+$$
+
+$$
+\begin{align*}
+\Pr(\theta \mid \text{tail}) &\propto \Pr(\theta) \cdot \Pr(\text{tail} \mid \theta) \\
+&\propto \theta^{\alpha - 1} (1 - \theta)^{\beta - 1} \cdot (1 - \theta) \\
+&= \theta^{\alpha - 1} (1 - \theta)^{(\beta + 1) - 1} \cdot \theta \propto \text{Beta}(\theta; \alpha, \beta + 1)
+\end{align*}
+$$
+
+##### Thompson Sampling
+
+Idea: Sample several potential average rewards
+- $\hat{R}(a) \sim \Pr(R(a) \mid r_1^a, r_2^a, \dots, r_n^a)$ 
+- Execute $\arg \max_a \hat{R}(a)$
+
+<img src="assets/lec13.2.png" width="450">
+
+Thompson sampling converges to best arm. In theory,
+- Expected cumulative regret: $O(\log{n})$
+- On par with UCB and $\epsilon$-greedy
+
+In practice however, Thompson Sampling often outperforms UCB and $\epsilon$-greedy
+
+
+## lec14
+
+So far, we have seen model-free methods:
+- Q-learning: Estimates the value function. No explicit representation for policy
+- Policy Gradient: Estimates the policy. No explicit representation for value function
+
+Now, let's consider model-based RL
+
+### Model-based RL
+
+In model-based RL, we maintain explicit representations of the transition and reward models.
+- The goal is to use these representations to help us plan in a more effective way
+- This is undeniably more complex (more steps, and more state recorded)
+- But it is also more sample efficient! (can obtain better solutions with fewer interactions with the environment / lesser samples)
+
+![](assets/lec14.1.png)
+
+As we can see from the above diagram, the only extra step in model-based RL is to update the model (transition and reward probabilities), and to use those to help us update the policy/value function!
+
+#### Model-based RL with Value Iteration
+
+![](assets/lec14.2.png)
+
+#### Complexities
+
+Enumerating all possible states to store transition/reward model is hard - especially in use cases like robotics, atari games, etc.
+
+Thus, function approximations are often used for estimating transition and reward models
+
+<img src="assets/lec14.3.png" width="500">
+
+
+In complex models, fully optimizing the policy or value function at each time step is intractable (too hard to do). Instead, what if we tried partial planning?
+- A few steps of $Q$-learning
+- A few steps of policy gradient
+
+#### Model-based RL with Q-learning
+
+This algorithm works with continuous states as well!
+
+![](assets/lec14.4.png)
+
+It is worth noting that this above algorithm is very familiar to model-free RL Q-learning with a replay buffer. Instead of updating Q-function based on samples from replay buffer, this algorithm generate samples from model
+
+- Replay buffer:
+	- Simple, real samples, no generalization to other sate-action pairs
+- Partial Planning with a model
+	- Complex, simulated samples, generalization to other state-action pairs (can help or hurt)
+
+### Dyna
+
+Can we combine the best parts of a model-free and model-based approach?
+
+- Learn explicit transition and/or reward model
+	- Plan based on the model
+ - Learn directly from real experience
+
+<img src="assets/lec14.5.png" width="400">
+
+This algorithm is called Dyna-Q because we use Q-learning as our planning approach
+
+<img src="assets/lec14.6.png" width="550">
+
+However, what if instead of planning at arbitrary states, we planned at the current state? This would help improve the next action. This brings us to the next algorithm Monte Carlo Tree Search (MCTS)
+
+### Monte Carlo Tree Search (MCTS)
+
+A tree search that simulates all possible trajectories is very expensive/wasteful. 
+
+Thus, MCTS uses a Tractable Tree Search approach. The idea is to cut off the search at certain nodes
+
+- **Leaf Nodes**: approximate leaf values with value of default policy $\pi$
+	- $Q^*(s, a) \approx Q^\pi(s, a) \approx \dfrac{1}{n(s, a)} \sum_{k = 1}^n G_k$ 
+- **Chance Nodes**: approximate expectation by sampling from transition model
+	- $Q^*(s, a) \approx R(s, a) + \gamma \dfrac{1}{n(s, a)} \sum_{s' ~ \Pr(s' \mid s, a)}V(s')$  
+- **Decision Nodes**: expand only most promising actions
+
+![](assets/lec14.7.png)
+
+#### Alphago using MCTS
+
+<img src="assets/lec14.8.png" width="250">
+
+- At each edge store $Q(s, a), \pi(a \mid s), n(s, a)$
+- At each node select edge $a^*$ that maximizes
+	- $a^* = \arg \max_a Q(s, a) + u(s, a)$
+	- where $u(s, a) \propto \dfrac{\pi(a \mid s)}{1 + n(s, a)}$ is an exploration bonus
+	- where $Q(s, a) = \dfrac{1}{n(s, a)} \sum_i 1_i (s, a) [\lambda V_w(s)+ (1 - \lambda)G_i]$ 
+	- where $1_i(s, a) = 1$ if $(s, a)$ was visited at iteration $i$, else $0$
+
+
+## lec15
+
+So far, we have considered only sequential decision processes
+- markov decision process
+- reinforcement learning
+- multi-armed bandits
+
+These are all single-agent environments. The real world however typically has more than one agent.
+
+Moreover, transition functions aren't actually stationary.
+
+<img src="assets/lec15.1.png" width="600">
+
+### Game Theory
+
+skipping some basic definition covered in slides. also skipping examples. refer to slides for that.
+
+Games can be
+- **cooperative**: agents have a common goal
+- **competitive**: agents have conflicting goals
+- **mixed**: agents have different goals, which are not conflicting
+
+#### Dominating Strategies
+
+A strategy is **strictly dominated** if 
+
+$$\exists a_i', \forall a_{-i} \quad R_i(a_i, a_{-i}) < R(a_i', a_{-i})$$
+
+A rational agent will never play a strictly dominated strategy.
+
+#### Nash Equilibrium
+
+A strategy profile $a^*$ is a Nash equilibrium if no agent has incentive to deviate from its strategy given that no others deviate.
+
+$$\forall i, a_i \quad R_i(a^*_i, a^*_{-1}) \geq R_i(a_i, a^*_{-i})$$
+
+#### Mixed Nash Equilibrium
+
+Instead of explicitly mentioning actions for states, mixed nash equilibrium defines a probability over the set of actions
+
+**Theorem**: Every game in which the strategy sets $A_1, \dots, A_n$ have a finite number of elements has a mixed strategy equilibrium.
+
+#### Other Useful Theorems
+
+**Theorem**: In an n-player pure strategy game, if iterated elimination of strictly dominated strategies eliminates all but the strategies $(a_1^*, \dots,a_n^*)$ then these strategies are the unique Nash equilibria of the game
+
+**Theorem**: Any Nash equilibrium will survive iterated elimination of strictly dominated strategies.
+
+
+## lec16
+
+### Stochastic Games
+
+- Multi-agent version of Markov decision process
+
+We can have two possible scenarios for rewards:
+- **Cooperative Game**: same reward for each agent
+- **Competitive Game**: $\sum_j {R^j}(s, a^1, \dots a^N) = 0$ 
+
+- Players choose their actions at the same time
+	- No communication with other agents
+	- No observation of other player’s actions
+- Each player chooses a strategy $\pi^i$ which is a mapping from states to actions and can be either be a mixed strategy or a pure strategy
+- At each state, all agents face a stage game (normal form game)
+	- The Q values of the current state and joint action of each player determine each player's utility
+
+Thus, a stochastic game can be viewed as a repeated normal form game with a state representation.
+
+So why is this stochastic? Isn't this just multiple repeated normal form games then? No. These games are stochastic because we maintain a distribution of the transition and reward function.
+
+Normal form games don't have anything stochastic – since there's just a bunch of rewards and states, but there's no notion of time steps or anything stochastic in its definition.
+
+### Multi-Agent Reinforcement Learning (MARL)
+
+- In MARL, a solution often corresponds to some equilibrium of the stochastic game. This is because each agent would try to maximize rewards – and this isn't really possible in a competitive setting. The rewards would thus converge to some equillibrium.
+- The most common solution concept is the Nash equilibrium
+
+The value function for a multi-agent setting looks like:
+
+<img src="assets/lec16.1.png" width="300">
+
+Nash Equilibrium under the stochastic game satisfies
+
+<img src="assets/lec16.2.png" width="450">
+
+#### Independent Learning
+
+A naive strategy at this point is to simply apply single-agent Q-learning directly. This involves each agent applying the Bellman Eqn to update its Q-values
+
+While this approach is easy to carry out, it doesn't work well with opponents playing complex strategies. The transition and rewards models will also become non-stationary over time. Moreover, there is no guarantee of convergence.
+
+### Opponent Modelling
+
+The biggest problem with independent learning is that it ignores the fact that there are other agents – because it doesn't know what they're going to do.
+
+Can we improve that approach by trying to model what opponents will do? By maintaining a belief of of the actions of other agents?
+
+#### Fictitious Play
+
+In this, each agent assumes that opponents are playing a stationary mixed strategy.
+
+Agents maintain a count of the number of times an agent performs an action
+
+$$n_t^i (s, a^j) = 1 + n_{t - 1}^i(s, a^j) \quad \forall i, j$$
+
+Agents update their belief about this strategy at each state using
+
+$${\Pr}_t^i(a^j \mid s) = \dfrac{n_t^i (s, a^j)}{\sum_{a'^j} n_t^i (s, a'^j)}$$
+
+Agents then calculate best responses according to this belief.
+
+### Cooperative Stochastic Games 
+
+If we apply fictitious play in an algorithm, we can obtain the joint Q learning algorithm. The name joint Q learning comes from the fact that the Q values now depend on actions of other agents as well.
+
+#### Joint Q learning 
+
+<img src="assets/lec16.3.png" width="550">
+
+##### Convergence of Joint Q learning
+
+Since there was no neural network involved above, it is a tabular method.
+
+If the game is finite (finite agents + finite strategies), then fictitious play will converge to the true responses of the opponent in the limit in self play.
+
+Self-play: All agents learn using the same algorithm
+
+Joint Q-learning converges to Nash Q-values in a cooperative stochastic game if
+- each state is visited infinitely often
+- The learning rate $\alpha$ is decreased fast enough, but not too fast (same conditions as before)
+
+In cooperative stochastic games, the Nash Q-values are unique (guaranteed unique equilibrium) 
+
+
+### Competitive Stochastic Games (Zero-sum games) 
+
+In the case of competitive games, recall that we will always have rewards that are 0 sum. Thus, we can look at maximizing the value function for one particular state as minimizing the value function for another particular state.
+
+The equilibrium in the case of competitive stochastic games is the min-max Nash equilibrium
+
+There exists a unique min-max (Nash) equilibrium in utilities
+
+The Optimal min-max value function is given by
+
+<img src="assets/lec16.5.png" width="500">
+
+#### Minimax Q learning 
+
+Instead of playing the best $Q(s, a^j, a^{-j})$, play min-max Q
+
+<img src="assets/lec16.6.png" width="450">
+
+The Algorithm is given by:
+
+<img src="assets/lec16.4.png" width="600">
+
+Minimax Q-learning follows the same convergence criteria as cooperative games in Joint Q-learning.
+
+In a competitive stochastic games, the Nash Q-values are unique (guaranteed unique min-max
+equilibrium point in utilities)
+
+#### Opponent Modelling
+
+Above, we showed how in a competitive setting, selecting the min max value is the best way to go. However, what if we don't know for sure if we're in a competitive setting? Or what if computing min-max is infeasible in the current scenario?
+
+What if we used opponent modelling – similar to how we did while considering cooperative games?
+
+Lucky for us,
+- Fictitious play converges in competitive zero-sum games
+- Fictitious play converges to the min-max action in self-play
+
+### Mixed-stochastic games / General Sum stochastic Games
+
+It is important to note that rewards can be arbitrary. There's no guarantee that each game would either be a competitive or cooperative one. The games might be such that agents need to cooperative in some situations, and compete in other situations.
+
+Objective for agent remains the same: Find the optimal policy for best response
+
+What should the solution concept be?
+- There could be multiple Nash equilibria
+- Remember that the Nash theorem states that at-least one mixed strategy Nash equilibrium exists
 
 
 ## lec17
@@ -894,6 +1676,7 @@ $$
 - $a(x)$ is the average distance from example $x$ to all other examples in its own cluster (internal cluster difference)
 - $b(x)$ is the smallest of the average distance of $x$ to examples in any other cluster (smallest avg distance from one other cluster)
 
+**Intuition**: why are we trying to maximize $s(x)$? Note that if $s(x)$ is large, it means that $x$ is well clustered - and that $x$ is far from the neighbouring clusters and close to the points in its own cluster. This is obviously desired. On the other hand, if $s(x)$ is close to $0$, then $x$ is on or very close to the decision boundary between two neighbouring clusters. This, for obvious reasons, is undesired. Lastly, if $s(x)$ is close to $-1$, then $x$ is likely assigned to the wrong cluster D:
 
 ### Dimensionality Reduction
 
@@ -913,3 +1696,10 @@ Finding intrinsic dimension makes problems simpler
 - 1st PC is the axis against which the variance of projected data is maximized
 - 2nd PC is an axis orthogonal to the 1st PC, such that the variance of projected data is maximized
 
+TODO
+
+## lec 22 + 23 
+
+TODO
+
+too hard fr

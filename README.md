@@ -281,7 +281,7 @@ where
 
 We estimate both $A$ and $S$ by observing $X$
 
-**Good Resource**: https://www.geeksforgeeks.org/ml-independent-component-analysis/
+**Good Resource**: [Geeks For Geeks page](https://www.geeksforgeeks.org/ml-independent-component-analysis/)
 
 ## lec6
 
@@ -630,7 +630,8 @@ MDP is framework to model reinforcement learning problems. It has the following 
 note: horizon is the number of time steps our agent will select actions for
 
 #### Common Assumptions 
-- made to simplify things
+
+made to simplify things
 
 - **Transition Model**
 	- Markovian: $\Pr(s_{t + 1} \mid s_{t}, a_{t}, s_{t - 1}, a_{t - 1}, \dots) = \Pr(s_{t + 1} \mid s_t, a_t)$
@@ -652,13 +653,13 @@ note: horizon is the number of time steps our agent will select actions for
 
 #### Policy and Policy Optimization
 
-Function that returns action given state
+Policy is a function that returns an action given a state
 
 $$\pi(s_t) = a_t$$
 
 **Key Assumption**: Assumes states are fully observable (has ALL possible information needed to make decision). This is hard to pull off in practice. Example: Tesla FSD is unlikely to have literally *all* information it needs. It works with partially observable states.
 
-Our goal is to find the best possible policy – one that gives us the *best* results. How do we evaluate how good a policy is though? How do we optimize our policy? We can do this by computing expected utility
+Our goal is to find the best possible policy – one that gives us the best results. How do we evaluate how good a policy is though? How do we optimize our policy? We can do this by computing expected utility
 
 **Expected Utility** is given by
 
@@ -673,7 +674,7 @@ The **optimal policy** here would be $\pi^*$ where $V^{\pi^*}(s_0) \geq V^{\pi}(
 
 #### Value Iteration
 
-Implement computing expected utility as a dynamic programming problem. This works by starting from the end (last time stamp), and working our way back. see slides for derivation.
+We implement computing expected utility as a dynamic programming problem. This works by starting from the end (last time stamp), and working our way back. see slides for derivation.
 
 **Bellman's equation**
 
@@ -697,8 +698,9 @@ $$
 	- stationary optimal policy: same best action at each time step
 	- intuition: same amount of time left at each time step
 	- assuming a discount factor $\gamma$, after a large enough amount of steps, $\gamma^n \to 0$. can solve this problem by using one of two strategies
-		- pick a large enough $n$ and run value iteration for $n$ steps
+		- pick a large enough $n$ and run value iteration for $n$ steps. 
 		- pick $\epsilon$ tolerance, and run till $\parallel V_n - V_{n - 1} \parallel_\infty \leq \epsilon$
+		- then, execute policy $\pi_n$ obtained in the end
 
 ## lec10
 
@@ -710,7 +712,7 @@ We can classify RL Agents depending on what they estimate:
 
 ### Q-learning
 
-In Q-learning is a model-free reinforcement learning technique. It estimates policies and value function, and doesn't need an explicit model of the environment (transition + reward models).
+Q-learning is a model-free reinforcement learning technique. It estimates the policy and the value function, and doesn't need an explicit model of the environment (transition + reward models).
 
 Let's try to derive this from what we already know about Value Iteration and Bellman's equation
 
@@ -737,9 +739,9 @@ $$
 
 where $V^*(s) = \max_a Q^*(s, a)$ and $\pi^*(s) = \arg\max_a Q^*(s, a)$
 
-The $Q^*$ function quantifies the quality of executing some action in some state, unlike Bellman's equation, which only gives us the best quality obtainable from some state.
+**Intuition**: the $Q^*$ function quantifies the quality of executing some action in some state, unlike Bellman's equation, which only gives us the best quality obtainable from some state.
 
-However, note that our Q-function still uses probabilities that we don't have access to. We need to get rid of it *somehow*. If we consider the second term of the equation, it is essentially the weighted average of Q values. How can we approximate this average? An intuitive way would be to take the average of lesser samples. An even more crude approximation is to simply take one of the values. This is called **one sample approximation**.
+However, note that our Q-function still uses probabilities that we don't have access to. We need to *somehow* get rid of those. If we consider the second term of the equation, it is essentially the weighted average of Q values. How can we approximate this average? An intuitive way would be to take the average of lesser samples. An even more crude approximation is to simply take one of the values. This is called **one sample approximation**.
 
 $$
 \begin{align*}
@@ -755,6 +757,14 @@ Q^*_n(s, a) = Q^*_{n - 1}(s, a) + \alpha_n (r + \gamma \cdot \max_{a'} Q^*_{n - 
 $$
 
 where $\alpha_n$ is our learning rate
+
+**Note**: Another very intuitive way of writing and remembering this is:
+
+$$
+Q^*_n(s, a) = (1 - \alpha_n) \cdot Q^*_{n - 1}(s, a) + \alpha_n (r + \gamma \cdot \max_{a'} Q^*_{n - 1}(s', a') )
+$$
+
+We can look at the update as scaling the current estimate by $(1 - \alpha_n)$ and the new estimate by $\alpha_n$
 
 #### Tabular Q-learning Algorithm
 
@@ -830,6 +840,7 @@ We can try by minimizing the squared error between Q-value estimate and target
 - **Target**: $r + \max_{a'} \gamma \cdot Q_{\bar{w}}(s', a')$
 
 **Squared Error**: $\text{Err}(w) = \dfrac{1}{2} (Q_w(s, a) - r  \max_{a'} \gamma \cdot Q_{\bar{w}}(s', a'))^2$
+
 **Loss**: $\dfrac{\delta \text{Err}}{\delta w} = (Q_w(s, a) - r - \max_{a'} \gamma \cdot Q_{\bar{w}}(s', a')) \dfrac{\delta Q_w(s, a)}{\delta w}$
 
 We treat $w$ as a variable, and $\bar{w}$ as a constant (since we fixed it).
@@ -895,9 +906,13 @@ DQN has been revolutionary – leading to human-level play in many Atari video
 
 ## lec12
 
-Q-learning is a model-free value based method. It stores an explicitly representation of the policy.
+Q-learning is a model-free value based method:
+- estimates the value function
+- does not store an explicit representation of the policy.
 
-Let us now look at a method called **Policy Gradient**, which is a model-free policy based method. Unlike Q-learning, it explicitly stores a representation of the value function and instead estimates the policy.
+Let us now look at a method called **Policy Gradient**, which is a model-free policy based method:
+- estimates the policy
+- does not store an explicit representation of the value function
 
 ### Stochastic Policy
 
@@ -913,9 +928,7 @@ where $h(s, a, \theta)$ is either
 - non-linear in $\theta$: $h(s, a, \theta) = \text{NeuralNet}(s, a; \theta)$
 	- here, $\theta$ represents the weights and biases of all the layers in the neural network
 
-On the other hand, if we consider continuous actions, we can calculate stochastic policy using gaussian distribution:
-
-$$N(a \mid \mu(s, \theta), \sum(s; \theta))$$
+On the other hand, if we consider continuous actions, we can calculate stochastic policy using a gaussian distribution: $N(a \mid \mu(s, \theta), \sum(s; \theta))$
 
 #### Supervised Learning
 
@@ -949,7 +962,7 @@ $$\theta_{n + 1} = \theta_{n} + a_n \gamma^n G_n \nabla_\theta \log \pi_\theta(a
 
 where $G_n = \sum_{t = 0}^\infty \gamma^t \cdot r_{n + t}$
 
-Omitting derivation of gradient^. Check Slides for more details. Prof. Pascal mentioned in class steps of the derivation aren't that important to understand.
+Omitting derivation of gradient^. Check Slides for more details. Prof. Pascal mentioned in class that we don't need to memorize the derivation. steps of the derivation might be a little important to understand. TODO go over derivation again
 
 #### REINFORCE Algorithm
 
@@ -958,14 +971,31 @@ Omitting derivation of gradient^. Check Slides for more details. Prof. Pascal me
 ### AlphaGo
 
 AlphaGo was trained using 4 steps:
-1. Supervised Learning of Policy Networks
-2. Policy gradient with Policy Networks 
-3. Value gradient with Value Networks
-4. Searching with Policy and Value Networks (MCTS)
+- **Pre-step: Create Policy Network**
+	- Train policy network to imitate Go experts based on a database of 30 million board configurations from the KGS Go Server.  
+	- Given a state (board), return a probability distribution over all possible actions $a$
+1. **Supervised Learning of Policy Networks**
+	- Let $\theta$ be the weights of the policy network
+	- Goal: Maximize $\log_{\pi_\theta} (a \mid s)$
+	- $\nabla_\theta = \dfrac{\delta \log_{\pi_\theta}{(a \mid s)}}{\delta \theta}$
+	- Perform weight update $\theta = \theta + \alpha \nabla_\theta$
+2. **Policy gradient with Policy Networks** 
+	- $G_n = \sum_{t} \gamma^t r_{n + t}$
+	- $\nabla_\theta = \dfrac{\delta \log_{\pi_\theta}{(a \mid s)}}{\delta \theta} \gamma^n G_n$
+	- Perform weight update $\theta = \theta + \alpha \nabla_\theta$
+	- In Go, the program repeatedly plays with its former self. For each game, $G_n = 1$ if win and $G_n = 0$ if lose, so the rewards are given at the end of the game and not at every step.
+3. **Value gradient with Value Networks**
+	- Let $w$ be the weights of the value network
+	- Goal: minimize $\dfrac{1}{2} (V_w(s) - G)^2$
+	- $\nabla_w = \dfrac{\delta V_w(s)}{\delta w} (V_w(s) - G)$
+	- Perform weight update $\theta = \theta - \alpha \nabla_w$
+4. **Searching with Policy and Value Networks (MCTS)**
+	- AlphaGo combines policy and value networks into a Monte Carlo Tree Search (MCTS) algorithm
+	- Idea: construct a search tree (covered later)
 
 ### Large Language Models (LLMs)
 
-TODO
+TODO (but most likely not imp for final exam)
 
 #### Reward Model
 
@@ -1004,12 +1034,15 @@ To do so, let us consider a new type of problem: **Bandits**. Bandits are one st
 
 There is no transition function to be learned since there is just one state! We simply need to learn the stochastic reward function
 
+**Applications**: Online Ad Placement – which ad should we present? Present the ad with the highest payoff. Let's assume a simplified version of this problem where we need to maximize the click through rate. As a bandits problem, can simulate the arms as the set of ads, and the rewards as 0 or 1 (no click or click). The problem then is to figure out the order the order to present ads in to maximize revenue.
+
 ### Regret
 
-- Let $R(a)$ be the average reward of $a$
+- Let $R(a)$ be the unknown average reward of $a$
 - Let $r^* = \max_a R(a)$ and $a^* = \arg \max_a R(a)$
 - Denote by $\text{loss}(a)$ the expected regret of $a$
 	- $\text{loss}(a) = r^* - R(a)$
+	- maximum average reward - average reward from chosen action
 - Denote by $\text{Loss}_n$ the expected cumulative regret for $n$ time steps
 	- $\text{Loss}_n = \sum_{t = 1}^n \text{loss}(a_t)$
 
@@ -1053,6 +1086,8 @@ $$
 \Pr\Bigg(R(a) \leq \tilde{R}(a) + \sqrt{\dfrac{\log(\dfrac{1}{\delta})}{2n_a}}\Bigg) \geq 1 - \delta
 $$
 
+where $n_a$ is the number of trials for arm $a$
+
 #### Upper Confidence Bound (UCB)
 
 Set $\delta_n = \dfrac{1}{n^4}$ in Hoeffding's inequality. Choose $a$ with highest hoeffding bound
@@ -1061,18 +1096,30 @@ Set $\delta_n = \dfrac{1}{n^4}$ in Hoeffding's inequality. Choose $a$ with highe
 
 As time goes by:
 - Probability that the bound does not hold decreases
+	- This is because the bound we compute holds with probability $1 - \delta$. Since $\delta = \dfrac{1}{n^4}$ decreases as time goes by, the probability $1 - \delta$ goes up
 - Bound increases
+	- Since our bound is directly proportional to $\sqrt{\log{n}}$, and since $n$ increases as time goes by, so does the bound.
 
 **Theorem**: Although Hoeffding's bound is probabilistic, UCB converges!
-**Intuition**: As $n$ increases, the term $\sqrt{\dfrac{2 \log{n}}{n_a}}$ increases. This ensures all arms are tried infinitely often
+
+**Intuition**: As $n$ increases, the term $\sqrt{\dfrac{2 \log{n}}{n_a}}$ increases. Arms that have not been visited have a low $n_a$, and thus this term will be higher for them. This ensures all arms are tried infinitely often. This is how the algorithm ensures exploration!
+
 Expected cumulative regret: $\text{Loss}_n = O(\log{n})$ (logarithmic regret)
 
 
 #### Thompson Sampling
+
+Another algorithm to solve multi-armed bandits problem is Thompson Sampling. Thompson sampling is to some extent quite similar to the UCB algorithm we saw before. The main difference is that we’re not computing a bound for $R(a)$ anymore – we’re computing a posterior distribution. Thompson maintains a probabilistic distribution over the possible true reward for each arm.
+
 ##### Bayesian Learning
 
+**Goal**: Use Prior distributions and observed data to compute Posterior Distributions.
+- Prior Distribution: Initial belief before seeing any data
+- Posterior Distribution: Updating belief after observing the data
+
+Terminology:
 - $r^a$: random variable for $a$'s rewards
-- $Pr(r^a, \theta)$: unknown distribution (parameterized by $\theta$)
+- $\Pr(r^a, \theta)$: unknown distribution (parameterized by $\theta$)
 - $R(a) = E[r^a]$: unknown average reward
 
 Since we don't know $\theta$, let's try to approximate it. We can express uncertainty about $\theta$ by a prior $\Pr(\theta)$
@@ -1100,9 +1147,9 @@ TODO: don't understand this part about guiding exploration
 ##### Bernoulli Variables
 
 Consider two biased coins $C_1$ and $C_2$. 
-Let us also model the rewards  $r^{C_1}$ and $r^{C_2}$ as bernoulli variables with domain $\{0, 1\}$. Bernoulli distributions are usually parameterized by their mean
-- $R(C_1) = \Pr(C_1 = \text{head})) = \Pr(r^{C_1}, \theta_1) = \theta_1$
-- $R(C_2) = \Pr(C_2 = \text{head})) = \Pr(r^{C_2}, \theta_2) = \theta_2$
+Let us also model the rewards  $r^{C_1}$ and $r^{C_2}$ as bernoulli variables with domain $\{0, 1\}$. Bernoulli distributions are parameterized by their mean
+- $R(C_1) = \Pr(C_1 = \text{head})) = \Pr(r^{C_1}; \theta_1) = \theta_1$
+- $R(C_2) = \Pr(C_2 = \text{head})) = \Pr(r^{C_2}; \theta_2) = \theta_2$
 
 We want to maximize # of heads in $k$ flips. Which coin should we pick?
 
@@ -1129,20 +1176,23 @@ $$
 \end{align*}
 $$
 
+TODO - don't understand properly
+
 ##### Thompson Sampling
 
-Idea: Sample several potential average rewards
-- $\hat{R}(a) \sim \Pr(R(a) \mid r_1^a, r_2^a, \dots, r_n^a)$ 
+**Idea**: We can apply the same idea we just saw above. Sample several potential average rewards
+- $\hat{R}(a) \sim \Pr(R(a) \mid r_1^a, r_2^a, \dots, r_n^a)$ for each $a$
 - Execute $\arg \max_a \hat{R}(a)$
+
+Similar to how we saw in the coin example $\Pr(R(a) | r_1^a, r_2^a, \dots, r_n^a)= \text{Beta}(\theta_a; \alpha_a, \beta_a)$, we will assume a Beta distribution for $R(a)$
 
 <img src="assets/lec13.2.png" width="450">
 
-Thompson sampling converges to best arm. In theory,
-- Expected cumulative regret: $O(\log{n})$
-- On par with UCB and $\epsilon$-greedy
+Thompson sampling converges to best arm.
 
-In practice however, Thompson Sampling often outperforms UCB and $\epsilon$-greedy
+In theory, the expected cumulative regret is $O(\log{n})$ – which is on par with UCB and $\epsilon$-greedy. However, in practice, Thompson Sampling outperforms UCB and $\epsilon$-greedy
 
+TODO - don't understand properly
 
 ## lec14
 
@@ -1175,7 +1225,6 @@ Thus, function approximations are often used for estimating transition and rewar
 
 <img src="assets/lec14.3.png" width="500">
 
-
 In complex models, fully optimizing the policy or value function at each time step is intractable (too hard to do). Instead, what if we tried partial planning?
 - A few steps of $Q$-learning
 - A few steps of policy gradient
@@ -1186,11 +1235,11 @@ This algorithm works with continuous states as well!
 
 ![](assets/lec14.4.png)
 
-It is worth noting that this above algorithm is very familiar to model-free RL Q-learning with a replay buffer. Instead of updating Q-function based on samples from replay buffer, this algorithm generate samples from model
+It is worth noting that this above algorithm is very similar to model-free RL Q-learning with a replay buffer. Instead of updating Q-function based on samples from replay buffer, this algorithm generate samples from model
 
-- Replay buffer:
+- **Replay buffer**
 	- Simple, real samples, no generalization to other sate-action pairs
-- Partial Planning with a model
+- **Partial Planning with a model**
 	- Complex, simulated samples, generalization to other state-action pairs (can help or hurt)
 
 ### Dyna
@@ -2058,11 +2107,11 @@ Finding intrinsic dimension makes problems simpler
 
 #### Principal Component Analysis (PCA)
 
-Good resources
-- https://youtu.be/FD4DeN81ODY?si=assPd2dTl1jO-Gy3
-- https://youtu.be/ey2PE5xi9-A?si=WRy4vyrpUpJNuWaC
+**Good resources**:
+- [yt video](https://youtu.be/FD4DeN81ODY?si=assPd2dTl1jO-Gy3)
+- [another yt video](https://youtu.be/ey2PE5xi9-A?si=WRy4vyrpUpJNuWaC)
 
-
+**What is PCA?**
 - method for unsupervised dimensionality reduction
 - account for variance of data in as few dimensions
 - 1st PC is the axis against which the variance of projected data is maximized

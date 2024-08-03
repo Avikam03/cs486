@@ -40,7 +40,7 @@ need to make 4 comparisons
 $X$ and $Y$ are conditionally independent given $Z$ if
 - $P(X \mid Y \land Z) = P(X \mid Y)$
 - $P(Y \mid X \land Z) = P(Y \mid X)$
-- $P(X \land Y \mid Z) = P(X \land Y)$
+- $P(X \land Y \mid Z) = P(X \mid Z) \cdot P(Y \mid Z)$
 
 need to make 8 comparisons
 
@@ -165,6 +165,10 @@ If $\text{ATE} \approx 0$, then there is an indication that shoe size does not h
 
 ### Supervised Learning
 
+Two types of problems
+- **Classification**: target features are discrete
+- **Regression**: target features are continuous
+
 **No free lunch theorem**: In order to learn something useful, we have to make some assumptions — have an inductive bias.
 
 How do we choose a hypothesis that generalizes well? One that predicts unseen data correctly?
@@ -283,6 +287,13 @@ We estimate both $A$ and $S$ by observing $X$
 
 ### Activation Functions
 
+Before we talk about commonly used activation functions, it is important to consider what makes up a *good* activation function!
+- **Nonlinearity**: Complex relationships are often nonlinear. Combining linear functions will not give us a nonlinear function. We can interleave linear and nonlinear functions to represent complex relationships.
+- **Mimic behaviour of real neurons**: If the weighted sum of the input signals is large enough, then the neuron fires (sends an output signal of 1). Otherwise, the neuron does not fire (sends an output signal of 0).
+- **Differentiable (almost everywhere)**: We learn a neural network by using optimization algorithms like gradient descent. Many such optimization algorithms require a function to be differentiable.
+
+With this in mind, let's look at some common activation functions
+
 1. **Step Function**: $g(x)=1$ if $x > 0$ and $g(x)=0$ if $x < 0$
 	- Simple to use, but not differentiable
 
@@ -399,9 +410,205 @@ We then feed it into the hidden layer, which produces an output.
 
 ## lec7
 
+### Gradient Descent
+
+Method to find local optima of a differentiable function
+
+**Intuition**: gradient tells us direction of greatest increase, negative gradient gives us direction of greatest decrease.
+
+- Take steps in directions that reduce the function value
+- Definition of derivative guarantees that if we take a small enough step in the direction of the negative gradient, the function will decrease in value
+
+### Gradient Descent in Higher Dimensions (Neural Networks)
+
+<img src="assets/lec7.1.png" width="400">
+
+To perform gradient descent, we need a loss function to calculate error
+
+$$E = \sum_{i} (a_i^{(2)} - y_i)^2$$
+
+Gradient Descent works by updating the weights as follows:
+
+$$W = W - \sum \eta \frac{\delta E}{\delta W}$$
+where $\eta$ is the learning rate
+
+The following techniques can be applied while updating weights:
+- **Incremental gradient descent**: Update weights after each example
+- **Stochastic gradient descent**: Same as incremental, but choose examples randomly. 
+- **Batched gradient descent**: Update weights after a batch of examples
+	- Batch size = All examples = gradient descent
+	- Batch size = 1 example = incremental gradient descent
+	- Often, we start with small batch sizes – to learn quickly – and then later increase the batch size so that the weights can converge
+
+#### Forward Pass
+
+Computes the error $E$ given the inputs and the weights
+
+<img src="assets/lec7.2.png" width="300">
+\
+#### Backward Pass
+
+Calculate the gradients for $W^{(1)}_{i, j}$ and $W^{(2)}_{j, k}$
+
+<img src="assets/lec7.3.png" width="400">
+
+![](assets/lec7.5.png)
+
+![](assets/lec7.6.png)
+
+#### Recursive Relationship
+
+<img src="assets/lec7.4.png" width="450">
+
+#### Sigmoid derivative
+
+Another important thing to note is the derivative of $g(x)$. If $g(x)$ is the sigmoid function, then it's derivative is given by
+
+$$\frac{\delta g(x)}{g(x)} = \frac{1}{1 + e^{-x}} \frac{e^{-x}}{1 + e^{-x}} = g(x) (1 - g(x))$$
+
+### Backpropagation Algorithm in a Matrix
+
+First, note that the sigmoid derivative can be stored in a diagonal matrix during forward propagation. 
+
+For the $i$-th layer output $x^{(i)}$, $\dfrac{\delta g(x^{(i)})}{\delta x^{(i)}} =$
+
+<img src="assets/lec7.7.png" width="400">
+
+<img src="assets/lec7.8.png" width="450">
+
+<img src="assets/lec7.9.png" width="450">
+
+
+## lec8
+
 - amazing [yt vid](https://www.youtube.com/watch?v=NE88eqLngkg) for momentum, nestorv momentum, adagrad, rmsprop, adam
 
+Let's look at a few first-order optimization methods
 
+### Gradient Descent
+
+<img src="assets/lec8.1.png" width="400">
+
+- **Pros**: Stable. Converges Quickly
+- **Cons**: Computationally expensive. Need to compute gradient estimate over $N$ samples for each update.
+
+### Stochastic Gradient Descent
+
+<img src="assets/lec8.2.png" width="400">
+
+Here, $\epsilon_k$ is the learning rate. Sufficient condition to guarantee convergence
+
+$$\sum_{k = 1} \epsilon_k \to \infty \text{ and } \sum_{k = 1} \epsilon_k^2 < \infty$$
+In practice, this learning rate is decayed linearly till iteration $T$
+
+$$\epsilon_k = (1 - \alpha) \epsilon_0 + \alpha \epsilon_T$$
+where $\alpha = \dfrac{k}{T}$, where $k$ is the # iteration
+
+Thus, $\epsilon_T$ is set to a small number, and $T$ is usually set as the number of iterations needed for a large number of passes through the data.
+
+- **Pros**: Computation time per update does not depend on number of training examples. Allows convergence on extremely large datasets
+- **Cons**: Gradient estimates can be noisy
+
+Obvious solution – use large mini-batches!
+
+### Batch Gradient Descent
+
+<img src="assets/lec8.3.png" width="250">
+
+where $N$ is the batch size
+
+### Momentum
+
+To overcome noisy gradients, a very useful parallel can be drawn and applied from physics. Similar to momentum in physics, we define momentum here to overcome local minima and oscillation of noisy gradients by building inertia in a search direction.
+
+This means that a weight update at time $t$ is not only given by the learning rate + gradient at that exact moment, but also the previous steps!
+
+Our concept of momentum uses an exponentially weighted average of the gradients to update the weights at each iteration. This ensures that recent gradients are given more weightage than previous ones.
+
+<img src="assets/lec8.4.png" width="350">
+
+- Usually, $\alpha$ is set to a high value. 
+- If $\alpha$ is larger than $\epsilon$, the current update is more affected by the previous gradients.
+
+<img src="assets/lec8.5.png" width="300">
+
+#### Step Size
+
+In SGD, step size was $\epsilon \textbardbl g \textbardbl$
+
+Now, step size is 
+
+$$\epsilon \textbardbl g_1 \textbardbl + \alpha \cdot \epsilon \textbardbl g_2 \textbardbl + \alpha_3 \cdot \epsilon \textbardbl g_3 \textbardbl + \dots + \alpha^K \cdot \epsilon \textbardbl g_1 \textbardbl = \epsilon \frac{\textbardbl \hat{g} \textbardbl}{1 - \alpha}$$
+
+Thus, the step size is $\dfrac{1}{1 - \alpha}$ larger than what it would have been without momentum
+
+### Nesterov Momentum
+
+Ilya Sutskever (yes *that* Ilya), showed that Nesterov's method could be conceptualized.
+
+Nesterov's method says to first take a step in the direction, then calculate the gradient and make a correction
+
+<img src="assets/lec8.6.png" width="500">
+
+<img src="assets/lec8.7.png" width="350">
+
+Only difference between this and regular momentum is that in regular momentum, gradient
+is calculated at the point at which $\theta$ is calculated before the velocity jump, and in nestorv
+momentum, gradient is calculated at the point at which $\theta$ can be found after the addition
+of the velocity jump
+
+The issue that Nestorv momentum attempts to solve is that the gradient calculated before the
+velocity jump might not be the appropriate step to take after the velocity jump
+
+### Adaptive Method
+
+Till now, we have been assigning the same learning rate to all the features. Practically speaking, each feature may not be equally important or frequent.
+
+#### AdaGrad (Adaptive Gradient)
+
+- AdaGrad focuses on scaling each parameter differently according to the amount that that specific parameter has changed during training.
+- It is evaluated as the sum of squared prior gradients.
+	- AdaGrad downscales a model parameter by the square root of the sum of squares of all its historical values
+- The idea is that if one parameter has changed significantly, then it must have made a lot of progress towards the target. The algorithm thus rapidly declines learning rates for such parameters. However, if it has not changed much, then it should continue to be updated with greater emphasis. This ensures that the parameter updates rely less on frequency and more on relevance
+
+
+<img src="assets/lec8.8.png" width="400">
+
+we have $\delta$ here as a numerical stabilizer. it is used for ensuring that we don’t divide by values extremely close to 0. $\delta$ is usually very small
+
+#### RMSProp (Root Mean Square)
+
+The main advantage of RMSProp over AdaGrad is that it allows the effective learning rate to both decrease and increase (AdaGrad only allowed decrease).
+
+RMSProp keeps history in mind by accumulating an exponentially decaying average of the gradient.
+
+<img src="assets/lec8.9.png" width="400">
+
+- Here, $\rho$ controls how much of the previous previous r term is remembered
+- Thus, when a large gradient is encountered, r is modified such as the learning rate is scaled down, and when a small gradient is encountered, it is scaled up
+- Intuitively, this allows us to retain some of the benefits of a decaying learning rate without suffering a permanently decayed learning rate
+\
+#### AdaDelta 
+
+- Similar to RMSProp as an improvement over AdaGrad. 
+- It completely removes the usage of hand-set learning rate. 
+- It uses the difference between the current weight and the newly updated weight as the learning rate.
+
+<img src="assets/lec8.10.png" width="400">
+
+### Adam Optimizer
+
+This scheme marries the benefits of RMSprop and Stochastic Gradient Descent with momentum
+
+The Adam inspiration gets its inspiration for the following features as follows:
+- RMSProp: maintains per-parameter learning rates that are adapted based on the average of recent magnitudes of the gradients for the weight
+- Momentum method: maintains a velocity term to keep track of history gradients.
+
+<img src="assets/lec8.11.png" width="400">
+
+Note that since $0 < \rho_1, \rho_2 < 1$, the denominator of the terms $\hat{s}$ and $\hat{r}$ moves closer towards $1$ with every time step. This means that in the first few time steps, $s$ and $r$ are magnified. This is okay though since initially $r$ and $s$ would also be $0$ or close to it, and thus the magnification help make $\hat{s}$ and $\hat{r}$ unbiased.
+
+Adam optimizer is by far one of the most successful optimizers to achieve great performance. 
 
 ## lec9
 
@@ -1248,6 +1455,7 @@ def search(graph, s, goal):
 
 - Treat frontier like a stack (LIFO)
 - Intuitively: Search one path to completion before trying another path. Backtrack to alternative if exhausted current path.
+
 #### Properties
 
 Useful Quantities:
@@ -1266,6 +1474,7 @@ Useful Quantities:
 #### When to use DFS
 - when space is restricted
 - when many solutions with long paths exist
+
 #### When to not use DFS
 - when there are infinite paths
 - when solutions are shallow
@@ -1275,6 +1484,7 @@ Useful Quantities:
 
 - Treats frontier like a queue (FIFO)
 - Intuitively: selects first encountered node with the least edges used so far
+
 #### Properties
 
 | Type                                                         | Complexity                       | Intuition                                                       |
@@ -1297,11 +1507,8 @@ Useful Quantities:
 
 Combine the best parts of BFS and DFS to get IDS
 
-best part of DFS
-- needs less space: $O(bm)$
-best part of BFS
-- needs less runtime: $O(b^d)$
-- guaranteed to find solution if it exists
+- **best part of DFS**: needs less space $O(bm)$
+- **best part of BFS**: needs less runtime $O(b^d)$ and is guaranteed to find solution if it exists
 
 #### How does it work?
 For each depth limit, perform DFS until the limit is reached.
@@ -1404,6 +1611,10 @@ However, this contradicts our assumption that $C^* < C^n$. Thus, A* is optimal!
 **Intuition for proof**: any algorithm that does not expand all nodes with $f(n) < C^*$ run the risk of missing the optimal solution. 
 
 TODO: write the contradiction proof
+
+### Summary of search strategies
+
+<img src="assets/lec18.3.png" width="500">
 
 ### Designing an Admissible Heuristic
 
@@ -1518,6 +1729,7 @@ $$
 - Most admissible heuristic functions are consistent.
 - It’s challenging to come up with a heuristic function that is admissible but not consistent
 
+
 ## lec19
 
 ### Generate-and-Test algorithm
@@ -1599,6 +1811,161 @@ This is because reducing a variable's domain may cause a previously consistent a
 3. If a domain is empty, terminate and return no solution
 4. If a unique solution is found, return the solution
 5. Otherwise, continue with backtracking search on the unassigned variables
+
+
+## lec20
+
+So far, we've seen algorithms that
+- explore search space systematically
+	- what if our search space is large/infinite though?
+- remember a path from the initial state
+	- What if we do not care about the path to a goal? e.g. CSP
+
+Solution: Local Search!
+
+### Local Search
+
+- Does not explore the search space systematically.
+- Can find reasonably good states quickly on average.
+- Not guaranteed to find a solution even if one exists. Cannot prove that no solution exists.
+- Does not remember a path to the current state.
+- Requires very little memory.
+- Can solve pure optimization problems.
+
+#### How does it work?
+
+- Start with a complete assignment of values to variables. 
+- Take steps to improve the solution iteratively
+
+A local state problem consists of:
+- **State**: complete assignment to all variables
+- **Neighbour relation**: which state do I explore next
+- **Cost function**: how good is each state
+	- Note that this isn't the same cost function we've seen before. This function is more like a heuristic function – since it evaluates how good the current state is. It does not keep track of cost incurred so far like how cost functions did previously.
+	- Note that the cost function here can't always compute values accurately – and might have to estimate the values sometimes
+
+#### Example: 4-Queens Problem
+
+- State: $x_0, x_1, x_2, x_3$ where $x_i$ is the row position of queen in column $i$
+- Initial state: A random state
+- Goal state: 4 queens on the board – with no queens attacking each other
+- Neighbour relation: can have something like this
+	- Move 1 queen to another row in the same column
+	- Swap the row positions of two queens
+- Cost Function: number of pairs of queens attacking each other
+
+Note: some neighbour relations can be bad. For example, the second neighbour relation leads to a search graph with disconnected components. For example, starting from state $(3, 2, 1, 1)$, we will never be able to get to the global optimum. This can be an issue for algorithms like simulated annealing.
+
+However, even better neighbour relations might not work always. Even if the entire search graph is connected, hill climbing might still not find the global optimum.
+
+Let's now look at some local search algorithms :)
+
+### Greedy Descent (hill climbing / greedy ascent)
+
+- Start with a random state
+- Move to neighbour with lowest cost if it's better than current state
+- Stop when no neighbour has a lower cost than current state
+
+Analogy: Descend into a canyon in a thick fog with amnesia
+- **Descend**: Move to best neighbour
+- **Thick Fog**: Can only choose among immediate neighbours
+- **Amnesia**: don't remember prev moves, may stumble on the same state multiple times
+
+- Performs well in practice. Makes rapid progress towards a solution
+- However, it is not guaranteed to find the global optimum. It might get stuck in local optimum
+
+### Escaping local optimums
+
+There are two ways to escape local optimums:
+1. **Sideway moves**: allow the algorithm to move to a neighbour that has the same cost
+	- caveat: on a flat local optimum, might get into an infinite loop. Thus, makes sense to limit the number of consecutive sideway moves
+2. **Tabu list**: Keep a small list of recently visited states (short term memory) and forbid the algorithm to return to those states
+
+Greedy descent performs MUCH better with sideway moves in practice.
+
+#### Choosing the Neighbour Relation
+
+The neighbour relation is meant to be a small incremental change to the variable assignment.
+
+There's a tradeoff:
+- **bigger neighbourhoods**: compare more nodes at each step. more likely to find the best step. each takes more time
+- **small neighbourhoods**: compare fewer nodes at each step. less likely to find the best step. each step takes less time
+
+Usually, small neighbourhoods are preferred
+
+### Greedy Descent with random moves
+
+Sideway moves don't solve all our problem though! Still might get stuck in a local optimum that is not a global optimum
+
+1. **Random restarts**: restart search in a different part of the space. 
+	- Example: Perform multiple greedy descent with random restarts.
+		- Finds global optimum with probability $\to 1$. This is because it will eventually generate a goal state as the initial state
+1. **Random walks**: move to a random neighbour. 
+	- Example: Simulated annealing
+
+### Simulated Annealing
+
+So far, we've seen:
+- Greedy descent focussing on optimization/exploitation
+- Random moves allowing exploration
+
+Can we combine the two into one algorithm?
+
+- **Annealing**: slowly cool down molten metals to make them stronger
+- Start with a high temperature and reduce it slowly
+- At each step choose a random neighbour. If the neighbour is an improvement, move to it. Otherwise, move to it based on a probability depending on 
+	- current temperature $T$ (we start with a high temperature)
+	- how bad the neighbour is compared to the current state $\Delta C$
+
+Analogy of life: When we're young, we're full of energy (temperature). Do a lot of exploration, and might make suboptimal moves. When we become older, we find a niche and focus on exploitation and optimizing rather than exploring new things.
+
+<img src="assets/lec20.1.png" width="400">
+
+We want to decrease the temperature slowly – as this guarantees our algorithm to find the global optimum with a probability $\to 1$. For this, a popular approach is geometric cooling. It works by multiplying temperature by a number $(0, 1)$ after each step.
+
+### Population-based algorithms
+
+Local search algorithms so far only remember a single state. What if we remember multiple states at a time?
+
+#### Beam Search
+
+- Remember $k$ states.
+- Choose $k$ best states out of all the neighbours
+- $k$ controls space and parallelism
+
+**Space Complexity**: $O(k)$
+
+Beam search is useful when the branching factor is large – this consumes huger space for algorithms like LCFS.
+
+- When $k = 1$, beam search is greedy descent
+- When $k = \infty$, beam search is BFS
+- Beam search is different from $k$ random restarts in parallel as each search is not independent of others. Useful information is passed among parallel search threads.
+- Beam search can be problematic as it suffers from a lack of diversity among the k states. It can quickly become concentrated in a small region
+
+#### Stochastic Beam Search
+
+- Choose $k$ states probabilistically
+- Probability of choosing a neighbour is proportional to its fitness
+	- proportional to $e^{-\dfrac{\text{cost}(A)}{T}}$
+- Maintains diversity in the population of states
+- Mimics **natural selection**
+	- Successors (offspring) of a state (organism) populate the next generation according to cost
+	- **Asexual reproduction**: each state mutates and the best offspring survive
+
+#### Genetic Algorithm
+
+- **Sexual reproduction**
+
+- Maintains a population of $k$ states
+- Randomly choose two states to reproduce
+	- Probability of choosing a state for reproduction is proportional to fitness of the state
+- Two parent states crossover to produce a child state
+- The child state mutates with a small probability
+- Repeat the steps above to produce a new population.
+- Repeat until the stopping criteria is satisfied.
+	- Example: Fixed number of generations, Time Limit, Fitness Thresholds, Convergence, etc. Can also be a combination of any of the mentioned stopping criteria.
+
+
 
 ## lec21
 
@@ -1691,6 +2058,11 @@ Finding intrinsic dimension makes problems simpler
 
 #### Principal Component Analysis (PCA)
 
+Good resources
+- https://youtu.be/FD4DeN81ODY?si=assPd2dTl1jO-Gy3
+- https://youtu.be/ey2PE5xi9-A?si=WRy4vyrpUpJNuWaC
+
+
 - method for unsupervised dimensionality reduction
 - account for variance of data in as few dimensions
 - 1st PC is the axis against which the variance of projected data is maximized
@@ -1701,5 +2073,3 @@ TODO
 ## lec 22 + 23 
 
 TODO
-
-too hard fr

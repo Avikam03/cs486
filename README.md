@@ -534,11 +534,11 @@ Our concept of momentum uses an exponentially weighted average of the gradients 
 
 #### Step Size
 
-In SGD, step size was $\epsilon \textbardbl g \textbardbl$
+In SGD, step size was $\epsilon \| g \|$
 
 Now, step size is 
 
-$$\epsilon \textbardbl g_1 \textbardbl + \alpha \cdot \epsilon \textbardbl g_2 \textbardbl + \alpha_3 \cdot \epsilon \textbardbl g_3 \textbardbl + \dots + \alpha^K \cdot \epsilon \textbardbl g_1 \textbardbl = \epsilon \frac{\textbardbl \hat{g} \textbardbl}{1 - \alpha}$$
+$$\epsilon \| g_1 \| + \alpha \cdot \epsilon \| g_2 \| + \alpha_3 \cdot \epsilon \| g_3 \| + \dots + \alpha^K \cdot \epsilon \| g_1 \| = \epsilon \frac{\| \hat{g} \|}{1 - \alpha}$$
 
 Thus, the step size is $\dfrac{1}{1 - \alpha}$ larger than what it would have been without momentum
 
@@ -666,6 +666,7 @@ Our goal is to find the best possible policy – one that gives us the best res
 $$
 V^\pi (s_0) = \sum_{t = 0}^h \gamma^t \sum_{s_{t + 1}} \Pr(s_{t + 1} \mid s_0, \pi) \cdot R(s_{t + 1}, \pi(s_{t + 1}))
 $$
+
 This is essentially an objective measure for how good the policy is. 
 
 Explanation for why we need to sum of all possible timestamps if the initial state is the same. Isn't this pointless if we're summing the same thing again but scaled differently? No. $\pi$ is not stationary. it is time dependent and changes with each time step. Thus, we need to consider the *expected* utility over all time steps.
@@ -768,12 +769,14 @@ We can look at the update as scaling the current estimate by $(1 - \alpha_n)$ an
 
 #### Tabular Q-learning Algorithm
 
+**IMPORTANT:** Q* is initialized arbitrarily! this was a quiz question.
+
 ![](assets/lec10.2.png)
 
 #### Convergence
 
 Despite doing one-sample approximation, Q-learning converges to optimal Q values if
-- Each state is visited infinitely enough (due to exploration)
+- Each state is visited infinitely enough (due to exploration). Thus, in the above algorithm, we are NOT always selecting and executing the best action! (quiz question)
 - The action selection becomes greedy as time $\to \infty$
 - The learning rate is decreased fast enough, but not too fast
 	- $\sum_t a_t \to \infty$ and $\sum_{t} a_t^2 < \infty$
@@ -834,6 +837,11 @@ Let $s = (x_1, x_2, \dots, x_n)^T$. We can now estimate the q-function using the
 ### Gradient Q-learning
 
 Gradient Q-learning is a variant of Q-learning where we use gradient step. It is a way of adapting the original Q-learning algorithm to use function approximation and perform updates by taking steps in the direction of the gradient.
+
+**Note**: Gradient Q-learning introduces some approximation level errors that would not exist in the case of tabular learning. However, it is still important to note that gradient q-learning is also advantageous as it (quiz question)
+- is more space efficient when there are a large number of states – since it allows for a more efficient representation/storage of the Q-function compared to storing values for each state, action pair.
+- supports continuous states
+- allows generalization over nearby states.
 
 We can try by minimizing the squared error between Q-value estimate and target
 - **Q-value estimate**: $Q_w(s, a)$
@@ -916,7 +924,7 @@ Let us now look at a method called **Policy Gradient**, which is a model-free po
 
 ### Stochastic Policy
 
-Consider the stochastic policy $\pi_\theta(a \mid s) = \Pr(a \mid s; \theta)$, parameterized by $\theta$ (weights).
+Consider the stochastic policy $\pi_\theta(a \mid s) = \Pr(a \mid s; \theta)$, parameterized by $\theta$ (weights). Here, these policies are stochastic because they map each state to a probability distribution of actions instead of a definite action.
 
 If we consider finitely many discrete actions, we can calculate stochastic policy using softmax:
 
@@ -968,12 +976,24 @@ Omitting derivation of gradient^. Check Slides for more details. Prof. Pascal me
 
 <img src="assets/lec12.1.png" width="550">
 
+**Note**: The following were quiz questions:
+- The REINFORCE algorithm can be used to train stochastic policies – but not deterministic policies
+- In policy gradient, the derivative of suboptimal actions is not necessarily negative. The sign of the gradient update depends on the sign of the rewards and the sign of the gradient of the log policy.  Suppose that a suboptimal action yields positive rewards and a positive gradient of the log policy, then the sign of the gradient update will be positive.
+- If the discount factor if set to $0$, the only reward that matters is the initial reward. This has the effect of decoupling all the decisions. Similarly, in supervised learning all predictions are decoupled. Setting the reward of the best action to 1 and the remaining actions to 0  is equivalent to setting a loss of 0 for the label and -1 for the other choices in supervised learning.  
+
+
 ### AlphaGo
 
 AlphaGo was trained using 4 steps:
+
 - **Pre-step: Create Policy Network**
 	- Train policy network to imitate Go experts based on a database of 30 million board configurations from the KGS Go Server.  
 	- Given a state (board), return a probability distribution over all possible actions $a$
+- **Pre-step: Create Value Network**
+	- Create a value network that predicts $V(s')$ (who will win the game) in each state
+	- Takes board as input and outputs the expected discounted sum of rewards
+		- In this case, the expected discounted sum of rewards can only be 1 or 0 – since we only consider terminal rewards - 0 if we lose the game and 1 if we win the game.
+
 1. **Supervised Learning of Policy Networks**
 	- Let $\theta$ be the weights of the policy network
 	- Goal: Maximize $\log_{\pi_\theta} (a \mid s)$
@@ -1043,20 +1063,22 @@ There is no transition function to be learned since there is just one state! We 
 - Denote by $\text{loss}(a)$ the expected regret of $a$
 	- $\text{loss}(a) = r^* - R(a)$
 	- maximum average reward - average reward from chosen action
-- Denote by $\text{Loss}_n$ the expected cumulative regret for $n$ time steps
-	- $\text{Loss}_n = \sum_{t = 1}^n \text{loss}(a_t)$
+- Denote by $\text{Loss}_{n}$ the expected cumulative regret for $n$ time steps
+	- $\text{Loss}_{n} = \sum_{t = 1}^n \text{loss}(a_t)$
 
 
 We have the following theoretical guarantees:
 - When $\epsilon$ is constant, then
 	- For large enough $t$, $\Pr(a_t \neq a^*) \approx \epsilon$ (select random action not greedy/optimal with probability $\epsilon$)
-	- Expected cumulative regret: $\text{Loss}_n \approx \sum_{t = 1}^n \epsilon = O(n)$
+	- Expected cumulative regret: $\text{Loss}_{n} \approx \sum_{t = 1}^n \epsilon = O(n)$
 		- Linear regret
 		- We only have regret when we choose a non optimal action. We assume here that optimal reward = 1, suboptimal reward = 0
+	- If epsilon is constant and always greater than 0, the algorithm will continue to explore with probability epsilon and thus never fully exploit the optimal action, preventing convergence to the optimal action. This means that the algorithm might converge to a suboptimal action.
 - When $\epsilon_t \propto \dfrac{1}{t}$
 	- For large enough $t$, $\Pr(a_t \neq a^*) \approx \epsilon_t = O(\dfrac{1}{t})$
-	- Expected cumulative regret: $\text{Loss}_n \approx \sum_{t = 1}^n \dfrac{1}{t} = O(\log n)$
+	- Expected cumulative regret: $\text{Loss}_{n} \approx \sum_{t = 1}^n \dfrac{1}{t} = O(\log n)$
 		- Logarithmic regret
+	- This strategy prevents premature convergence to a suboptimal action because it ensures sufficient exploration in the early stages.
 
 ### Multi-armed bandits
 
@@ -1068,11 +1090,11 @@ We want to figure out how far empirical mean $\tilde{R}(a)$ is from the true mea
 
 Moreover, the more data we have, the tighter bound we can compute.
 
-Let's assume that we have an oracle that returns an upper bound $\text{UB}_n(a)$ on $R(a)$ for each arm based on $n$ trials of arm $a$. Assume the upper bound returned by this oracle converges to $R(a)$, i.e, $\lim_{n \to \infty} \text{UB}_n (a) = R(a)$
+Let's assume that we have an oracle that returns an upper bound $\text{UB}_{n}(a)$ on $R(a)$ for each arm based on $n$ trials of arm $a$. Assume the upper bound returned by this oracle converges to $R(a)$, i.e, $\lim_{n \to \infty} \text{UB}_{n} (a) = R(a)$
 
-For bandits, being positive is a good approach! Thus, an optimistic algorithm is to select $\arg \max_a \text{UB}_n(a)$ each step.
+For bandits, being positive is a good approach! Thus, an optimistic algorithm is to select $\arg \max_a \text{UB}_{n}(a)$ each step.
 
-**Theorem**: An optimistic strategy that always selects $\arg \max_a \text{UB}_n(a)$ will converge to $a^*$
+**Theorem**: An optimistic strategy that always selects $\arg \max_a \text{UB}_{n}(a)$ will converge to $a^*$
 
 #### Probabilistic Upper Bound
 
@@ -1104,12 +1126,12 @@ As time goes by:
 
 **Intuition**: As $n$ increases, the term $\sqrt{\dfrac{2 \log{n}}{n_a}}$ increases. Arms that have not been visited have a low $n_a$, and thus this term will be higher for them. This ensures all arms are tried infinitely often. This is how the algorithm ensures exploration!
 
-Expected cumulative regret: $\text{Loss}_n = O(\log{n})$ (logarithmic regret)
+Expected cumulative regret: $\text{Loss}_{n} = O(\log{n})$ (logarithmic regret)
 
 
 #### Thompson Sampling
 
-Another algorithm to solve multi-armed bandits problem is Thompson Sampling. Thompson sampling is to some extent quite similar to the UCB algorithm we saw before. The main difference is that we’re not computing a bound for $R(a)$ anymore – we’re computing a posterior distribution. Thompson maintains a probabilistic distribution over the possible true reward for each arm.
+Another algorithm to solve multi-armed bandits problem is Thompson Sampling. Thompson sampling is to some extent quite similar to the UCB algorithm we saw before. The main difference is that we’re not computing a bound for $R(a)$ anymore – we’re computing a posterior distribution. Thompson Sampling maintains a probabilistic distribution over the possible true reward for each arm.
 
 ##### Bayesian Learning
 
@@ -1142,7 +1164,9 @@ $$\Pr(R(a) \mid r_1^a, \dots r_n^a) = \Pr(\theta \mid r_1^a, \dots, r_n^a)$$
 
 if $\theta = R(a)$
 
-TODO: don't understand this part about guiding exploration
+Thus, one difference between UCB and Bayesian Techniques is that to guide exploration, 
+- **UCB** uses a confidence interval: $\Pr( R(a) \leq \text{bound}(r_1^a, r_2^a, r_n^a)) \geq 1 - \delta$
+- **Bayesian techniques** use a posterior distribution: $\Pr(R(a) \mid r_1^a, \dots r_n^a)$
 
 ##### Bernoulli Variables
 
@@ -1176,23 +1200,19 @@ $$
 \end{align*}
 $$
 
-TODO - don't understand properly
-
 ##### Thompson Sampling
 
 **Idea**: We can apply the same idea we just saw above. Sample several potential average rewards
 - $\hat{R}(a) \sim \Pr(R(a) \mid r_1^a, r_2^a, \dots, r_n^a)$ for each $a$
 - Execute $\arg \max_a \hat{R}(a)$
 
-Similar to how we saw in the coin example $\Pr(R(a) | r_1^a, r_2^a, \dots, r_n^a)= \text{Beta}(\theta_a; \alpha_a, \beta_a)$, we will assume a Beta distribution for $R(a)$
+Similar to how we saw in the coin example $\Pr(R(a) \mid r_1^a, r_2^a, \dots, r_n^a)= \text{Beta}(\theta_a; \alpha_a, \beta_a)$, we will assume a Beta distribution for $R(a)$
 
 <img src="assets/lec13.2.png" width="450">
 
 Thompson sampling converges to best arm.
 
 In theory, the expected cumulative regret is $O(\log{n})$ – which is on par with UCB and $\epsilon$-greedy. However, in practice, Thompson Sampling outperforms UCB and $\epsilon$-greedy
-
-TODO - don't understand properly
 
 ## lec14
 
@@ -1270,6 +1290,17 @@ Thus, MCTS uses a Tractable Tree Search approach. The idea is to cut off the sea
 	- $Q^*(s, a) \approx R(s, a) + \gamma \dfrac{1}{n(s, a)} \sum_{s' ~ \Pr(s' \mid s, a)}V(s')$  
 - **Decision Nodes**: expand only most promising actions
 
+
+MCTS has the following steps:
+1. Selection
+2. Expansion
+3. Simulation
+4. Backpropagation
+	- Updates the values of the nodes based on the results of the simulation (quiz question)
+
+<img src="assets/lec14.9.png" width="500">
+
+
 ![](assets/lec14.7.png)
 
 #### Alphago using MCTS
@@ -1283,6 +1314,7 @@ Thus, MCTS uses a Tractable Tree Search approach. The idea is to cut off the sea
 	- where $Q(s, a) = \dfrac{1}{n(s, a)} \sum_i 1_i (s, a) [\lambda V_w(s)+ (1 - \lambda)G_i]$ 
 	- where $1_i(s, a) = 1$ if $(s, a)$ was visited at iteration $i$, else $0$
 
+TODO - dont understand
 
 ## lec15
 
@@ -1346,7 +1378,9 @@ We can have two possible scenarios for rewards:
 - Players choose their actions at the same time
 	- No communication with other agents
 	- No observation of other player’s actions
-- Each player chooses a strategy $\pi^i$ which is a mapping from states to actions and can be either be a mixed strategy or a pure strategy
+- Each player chooses a strategy $\pi^i$ which is a mapping from states to actions and can be either be
+	- mixed strategy (distribution of actions for at least one state)
+	- pure strategy (one action with probability 1 for all states)
 - At each state, all agents face a stage game (normal form game)
 	- The Q values of the current state and joint action of each player determine each player's utility
 
@@ -1397,9 +1431,15 @@ Agents then calculate best responses according to this belief.
 
 ### Cooperative Stochastic Games 
 
-If we apply fictitious play in an algorithm, we can obtain the joint Q learning algorithm. The name joint Q learning comes from the fact that the Q values now depend on actions of other agents as well.
+- Cooperative Stochastic games have the same reward functions for all agents
+- Equilibrium for cooperative stochastic games is the **Pareto dominating (Nash) equilibrium**
+	- **Nash equilibrium**: $\forall i, a_i, R_i (a_i^*, a_{-i}^*) \geq R_i (a_i, a_{-i}^*)$
+	- **Pareto dominating**: $\forall i, R_i(a^*) \geq R_i(a'^{*})$
+- There exists a unique Pareto dominating Nash Equilibrium
 
 #### Joint Q learning 
+
+If we apply fictitious play in an algorithm, we can obtain the joint Q learning algorithm. The name joint Q learning comes from the fact that the Q values now depend on actions of other agents as well.
 
 <img src="assets/lec16.3.png" width="550">
 
@@ -1417,33 +1457,25 @@ Joint Q-learning converges to Nash Q-values in a cooperative stochastic game if
 
 In cooperative stochastic games, the Nash Q-values are unique (guaranteed unique equilibrium) 
 
-
-### Competitive Stochastic Games (Zero-sum games) 
+### Competitive Stochastic Games
 
 In the case of competitive games, recall that we will always have rewards that are 0 sum. Thus, we can look at maximizing the value function for one particular state as minimizing the value function for another particular state.
 
-The equilibrium in the case of competitive stochastic games is the min-max Nash equilibrium
-
-There exists a unique min-max (Nash) equilibrium in utilities
-
-The Optimal min-max value function is given by
+- The equilibrium in the case of competitive stochastic games is the min-max Nash equilibrium
+- There exists a unique min-max (Nash) equilibrium in utilities
+- The optimal min-max value function is given by
 
 <img src="assets/lec16.5.png" width="500">
 
+Since there exists a unique min-max value function, there is also a unique min-max Q-function.
+
 #### Minimax Q learning 
 
-Instead of playing the best $Q(s, a^j, a^{-j})$, play min-max Q
-
-<img src="assets/lec16.6.png" width="450">
-
-The Algorithm is given by:
+The algorithm works by playing min-max Q instead of playing the best $Q(s, a^j, a^{-j})$.
 
 <img src="assets/lec16.4.png" width="600">
 
 Minimax Q-learning follows the same convergence criteria as cooperative games in Joint Q-learning.
-
-In a competitive stochastic games, the Nash Q-values are unique (guaranteed unique min-max
-equilibrium point in utilities)
 
 #### Opponent Modelling
 
@@ -2108,6 +2140,7 @@ Finding intrinsic dimension makes problems simpler
 #### Principal Component Analysis (PCA)
 
 **Good resources**:
+- [andrew ng notes](https://cs229.stanford.edu/notes2020spring/cs229-notes10.pdf)
 - [yt video](https://youtu.be/FD4DeN81ODY?si=assPd2dTl1jO-Gy3)
 - [another yt video](https://youtu.be/ey2PE5xi9-A?si=WRy4vyrpUpJNuWaC)
 
@@ -2117,7 +2150,85 @@ Finding intrinsic dimension makes problems simpler
 - 1st PC is the axis against which the variance of projected data is maximized
 - 2nd PC is an axis orthogonal to the 1st PC, such that the variance of projected data is maximized
 
-TODO
+**PCA Terminology**
+- Let our data be $x \in R^{n \times p}$, such that there are $n$ data points and $p$ features.
+- Let's say we want to project our data into a lower dimension $p' < p$. We thus need to find a projection matrix $W \in R^{p \times p'}$. We can then perform $T = X W$ to obtain a projection of our data in the lower dimension.
+- We can even obtain the original data back by performing $T W^T = X W W^T = X$
+
+##### PCA Algorithm I
+
+**Preprocessing**:
+
+We assume our dataset is $\{ x_i; i = 1, \dots, m\}$. Each $x_i \in R^d$, and thus has $d$ features. 
+
+- Zero out the mean / centre the data
+	- $\mu^{(j)} = \dfrac{1}{m} \sum_{i = 1}^m x^{(j)}_i$
+	- $x_i^{(j)} = x_i^{(j)} - \mu^{(j)}$
+- Normalize to unit variance (Optional (don't do this since we haven't been told to))
+	- ${\sigma^{(j)}}^2 = \dfrac{1}{m} \sum_{i = 1}^m (x_i^{(j)} - \mu^{(j)})^2$
+	- $x_i^{(j)} = \dfrac{x_i^{(j)}}{\sigma^{(j)}}$
+		- A standard deviation of 1 for each feature ensures that different attributes are all treated on the same “scale.” For instance, if $x^{(1)}$ was a car's maximum speed in mph (taking values in the high tens or low hundreds) and $x^{(2)}$ were the number of seats (taking values around 2-4), then this renormalization rescales the different attributes to make them more comparable. 
+
+
+**Steps**:
+
+Compute First Principal Component $w_1$
+
+$$w_1 = \arg \max_{\vert w \vert = 1} \dfrac{1}{m} \sum_{i = 1}^m \{ (w^T x_i)^2 \}$$
+
+- $w^T x_i$ is the length of projection of $x_i$ onto $w$
+- Intuitively, this equation tries to maximize the length/variance of projection
+
+Note: can simplify the above equation as
+
+$$
+\begin{align*}
+w_1 &= \arg \max_{\vert w \vert = 1} \dfrac{1}{m} \sum_{i = 1}^m \{ (w^T x_i) (x_i^T w) \} \\
+&= \arg \max_{\vert w \vert = 1} \Bigg(w^T \Big(\dfrac{1}{m} \sum_{i = 1}^m  x_i x_i^T  \Big) w \Bigg) \\
+\end{align*}
+$$
+
+This then simplifies to finding the principal eigenvector of the empirical covariance matrix $\sum = \dfrac{1}{m} \sum_{i = 1}^m x_i x_i^T$
+
+To find other Principal Components, a general form of principal vectors is given by
+
+$$w_k = \arg\max_{\vert w \vert = 1} \dfrac{1}{m} \sum_{i = 1}^m \{ w^T [x_i - \sum_{j = 1}^k w_j w_j^T x_i]^2 \}$$
+
+##### PCA Algorithm II
+
+**Preprocessing**:
+
+- Mean centre the data (just like in Algorithm I)
+
+**Steps**:
+
+- Compute covariance matrix $\sum = X^T X$
+- Calculate the eigenvalues and eigenvectors
+	- Eigenvector with largest eigenvalue $\lambda_1$ is the first PC
+	- Eigenvector with $k^{th}$ largest eigenvalue is the $k^{th}$ PC
+	- $\dfrac{\lambda_i}{\sum_k \lambda_k}$ is the proportion of variance captured by the $i^{th}$ PC
+
+Similar to Algorithm I, the goal here is to maximize $u^T X^T X u$ where $u^T u = 1$
+
+To do this, we first can construct the lagrangian multiplier and maximize it
+
+$$L(u, \lambda) = u^T X^T X u - \lambda u^T u$$
+
+The partial derivative is set to $0$
+
+$$\Delta_u L(u, \lambda) = 2 X^T X u - 2\lambda u = 2(X^T X - \lambda I)u = 0$$
+
+Therefore, $u$ must be an eigenvector of $X^T X$ with eigenvalue $\lambda$
+
+**Some useful properties**:
+- The eigenvectors of distinct eigenvalues are orthogonal for symmetric matrices
+	- $X^T X u = \lambda u$, and $\lambda_1 \neq \lambda_2$ leads to $u_1 \cdot u_2 = 0$
+- All eigenvalues of real symmetric matrices are real
+	- $\vert X^T X - \lambda I \vert = 0$ and $\lambda \in R$
+- All eigenvalues of a positive semi-definite are non-negative
+	- $u^T X^T X u \geq 0$, then $\lambda > 0$
+
+TODO - quiz questions for PCA + refer to answers on piazza
 
 ## lec 22 + 23 
 

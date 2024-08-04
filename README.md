@@ -671,7 +671,7 @@ This is essentially an objective measure for how good the policy is.
 
 Explanation for why we need to sum of all possible timestamps if the initial state is the same. Isn't this pointless if we're summing the same thing again but scaled differently? No. $\pi$ is not stationary. it is time dependent and changes with each time step. Thus, we need to consider the *expected* utility over all time steps.
 
-The **optimal policy** here would be $\pi^*$ where $V^{\pi^*}(s_0) \geq V^{\pi}(s_0)$ for all other $\pi$
+The **optimal policy** here would be $\pi$* where $V^{\pi^{\star}}(s_0) \geq V^{\pi}(s_0)$ for all other $\pi$
 
 #### Value Iteration
 
@@ -681,14 +681,14 @@ We implement computing expected utility as a dynamic programming problem. This w
 
 $$
 \begin{align*}
-	V^*_\infty (s_t) &= \max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^*_\infty (s_{t + 1}) \\
-	a^*_t &= \arg\max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^*_\infty (s_{t + 1})
+	V^{\star}_\infty (s_t) &= \max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^{\star}_\infty (s_{t + 1}) \\
+	a^{\star}_t &= \arg\max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^{\star}_\infty (s_{t + 1})
 \end{align*}
 $$
 
 <img src="assets/lec9.3.png" width="500">
 
-**Note**: $\pi^*$ is not stationary, and depends on the current time step/iteration
+**Note**: $\pi$* is not stationary, and depends on the current time step/iteration
 
 #### Horizon
 
@@ -718,43 +718,43 @@ Q-learning is a model-free reinforcement learning technique. It estimates the po
 Let's try to derive this from what we already know about Value Iteration and Bellman's equation
 
 $$
-V^*_n (s_t) = \max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^*_{n - 1} (s_{t + 1})
+V^{\star}_n (s_t) = \max_{a_t} R(s_t, a_t) + \gamma \sum_{s_{t + 1}} \Pr (s_{t + 1} \mid s_t, a_t) \cdot V^{\star}_{n - 1} (s_{t + 1})
 $$
 
 We can rewrite this as
 
 $$
-V^*_n (s) = \max_{a} E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot V^*_{n - 1} (s')
+V^{\star}_n (s) = \max_{a} E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot V^{\star}_{n - 1} (s')
 $$
 Further, when $n \to \infty$
 
 $$
-V^* (s) = \max_{a} E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot V^* (s')
+V^{\star} (s) = \max_{a} E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot V^{\star} (s')
 $$
 
 Now, instead of considering only state, let us consider state action pairs
 
 $$
-Q^* (s, a) = E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot \max_{a'} Q^* (s', a')
+Q^{\star} (s, a) = E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot \max_{a'} Q^{\star} (s', a')
 $$
 
-where $V^*(s) = \max_a Q^*(s, a)$ and $\pi^*(s) = \arg\max_a Q^*(s, a)$
+where $V^{\star}(s) = \max_a Q^{\star}(s, a)$ and $\pi^{\star}(s) = \arg\max_a Q^{\star}(s, a)$
 
-**Intuition**: the $Q^*$ function quantifies the quality of executing some action in some state, unlike Bellman's equation, which only gives us the best quality obtainable from some state.
+**Intuition**: the $Q^{\star}$ function quantifies the quality of executing some action in some state, unlike Bellman's equation, which only gives us the best quality obtainable from some state.
 
 However, note that our Q-function still uses probabilities that we don't have access to. We need to *somehow* get rid of those. If we consider the second term of the equation, it is essentially the weighted average of Q values. How can we approximate this average? An intuitive way would be to take the average of lesser samples. An even more crude approximation is to simply take one of the values. This is called **one sample approximation**.
 
 $$
 \begin{align*}
-Q^* (s, a) &= E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot \max_{a'} Q^* (s', a') \\
-&\approx r + \gamma \cdot \max_{a'} Q^* (s', a') \\
+Q^{\star} (s, a) &= E[r \mid s, a] + \gamma \sum_{s'} \Pr (s' \mid s, a) \cdot \max_{a'} Q^{\star} (s', a') \\
+&\approx r + \gamma \cdot \max_{a'} Q^{\star} (s', a') \\
 \end{align*}
 $$
 
-We can now take the difference we were going to update $Q^*$ by (RHS - LHS) and scale it (by a learning rate) to update $Q^*$
+We can now take the difference we were going to update $Q^{\star}$ by (RHS - LHS) and scale it (by a learning rate) to update $Q^{\star}$
 
 $$
-Q^*_n(s, a) = Q^*_{n - 1}(s, a) + \alpha_n (r + \gamma \cdot \max_{a'} Q^*_{n - 1}(s', a') - Q^*_{n - 1}(s, a))
+Q^{\star}_n(s, a) = Q^{\star}_{n - 1}(s, a) + \alpha_n (r + \gamma \cdot \max_{a'} Q^{\star}_{n - 1}(s', a') - Q^{\star}_{n - 1}(s, a))
 $$
 
 where $\alpha_n$ is our learning rate
@@ -762,7 +762,7 @@ where $\alpha_n$ is our learning rate
 **Note**: Another very intuitive way of writing and remembering this is:
 
 $$
-Q^*_n(s, a) = (1 - \alpha_n) \cdot Q^*_{n - 1}(s, a) + \alpha_n (r + \gamma \cdot \max_{a'} Q^*_{n - 1}(s', a') )
+Q^{\star}_n(s, a) = (1 - \alpha_n) \cdot Q^{\star}_{n - 1}(s, a) + \alpha_n (r + \gamma \cdot \max_{a'} Q^{\star}_{n - 1}(s', a') )
 $$
 
 We can look at the update as scaling the current estimate by $(1 - \alpha_n)$ and the new estimate by $\alpha_n$
@@ -786,7 +786,7 @@ Despite doing one-sample approximation, Q-learning converges to optimal Q values
 
 - **$\epsilon$-greedy** 
 	- with probability $\epsilon$, execute a random action
-	- otherwise, execute best action $a^* = \arg\max_a Q(s, a)$
+	- otherwise, execute best action $a^{\star} = \arg\max_a Q(s, a)$
 - **Boltzmann exploration**
 	- increasing temperature $T$ increases stochasticity
 	- $$\Pr(a) = \dfrac{e^{\dfrac{Q(s, a)}{T}}}{\sum_a e^{\dfrac{Q(s, a)}{T}}} \quad \text{(softmax activation fn)}$$
@@ -940,17 +940,17 @@ On the other hand, if we consider continuous actions, we can calculate stochasti
 
 #### Supervised Learning
 
-Data: $\{ (s_1, a_1^*), (s_2, a_2^*), \dots \}$ where $a*$ is the optimal action
+Data: $\{ (s_1, a_1^{\star}), (s_2, a_2^{\star}), \dots \}$ where $a*$ is the optimal action
 
 Our goal is to maximize the log likelihood of the data:
 
 $$
-\theta^* = \arg \max_{\theta} \sum_{n} \log\pi_{\theta}(a_n^* \mid s_n)
+\theta^{\star} = \arg \max_{\theta} \sum_{n} \log\pi_{\theta}(a_n^{\star} \mid s_n)
 $$
 
 Gradient updates are then done as follows:
 
-$$\theta_{n + 1} = \theta_{n} + a_n \nabla_\theta \log \pi_\theta(a_n^* \mid s_n)$$
+$$\theta_{n + 1} = \theta_{n} + a_n \nabla_\theta \log \pi_\theta(a_n^{\star} \mid s_n)$$
 
 #### Reinforcement Learning
 
@@ -959,14 +959,14 @@ Data: $\{ (s_1, a_1, r_1), (s_2, a_2, r_2), \dots \}$
 Our goal is to maximize discounted sum of rewards:
 
 $$
-\theta^* = \arg \max_\theta \sum_n \gamma^n E[r_n \mid s_n, a_n]
+\theta^{\star} = \arg \max_\theta \sum_n \gamma^n E[r_n \mid s_n, a_n]
 $$
 
 Note that this is basically the value function $V_\theta$
 
 We claim that the gradient of this expression is similar to the gradient obtained in supervised learning.
 
-$$\theta_{n + 1} = \theta_{n} + a_n \gamma^n G_n \nabla_\theta \log \pi_\theta(a_n^* \mid s_n)$$
+$$\theta_{n + 1} = \theta_{n} + a_n \gamma^n G_n \nabla_\theta \log \pi_\theta(a_n^{\star} \mid s_n)$$
 
 where $G_n = \sum_{t = 0}^\infty \gamma^t \cdot r_{n + t}$
 
@@ -1059,9 +1059,9 @@ There is no transition function to be learned since there is just one state! We 
 ### Regret
 
 - Let $R(a)$ be the unknown average reward of $a$
-- Let $r^* = \max_a R(a)$ and $a^* = \arg \max_a R(a)$
+- Let $r^{\star} = \max_a R(a)$ and $a^{\star} = \arg \max_a R(a)$
 - Denote by $\text{loss}(a)$ the expected regret of $a$
-	- $\text{loss}(a) = r^* - R(a)$
+	- $\text{loss}(a) = r^{\star} - R(a)$
 	- maximum average reward - average reward from chosen action
 - Denote by $\text{Loss}_{n}$ the expected cumulative regret for $n$ time steps
 	- $\text{Loss}_{n} = \sum_{t = 1}^n \text{loss}(a_t)$
@@ -1069,13 +1069,13 @@ There is no transition function to be learned since there is just one state! We 
 
 We have the following theoretical guarantees:
 - When $\epsilon$ is constant, then
-	- For large enough $t$, $\Pr(a_t \neq a^*) \approx \epsilon$ (select random action not greedy/optimal with probability $\epsilon$)
+	- For large enough $t$, $\Pr(a_t \neq a^{\star}) \approx \epsilon$ (select random action not greedy/optimal with probability $\epsilon$)
 	- Expected cumulative regret: $\text{Loss}_{n} \approx \sum_{t = 1}^n \epsilon = O(n)$
 		- Linear regret
 		- We only have regret when we choose a non optimal action. We assume here that optimal reward = 1, suboptimal reward = 0
 	- If epsilon is constant and always greater than 0, the algorithm will continue to explore with probability epsilon and thus never fully exploit the optimal action, preventing convergence to the optimal action. This means that the algorithm might converge to a suboptimal action.
 - When $\epsilon_t \propto \dfrac{1}{t}$
-	- For large enough $t$, $\Pr(a_t \neq a^*) \approx \epsilon_t = O(\dfrac{1}{t})$
+	- For large enough $t$, $\Pr(a_t \neq a^{\star}) \approx \epsilon_t = O(\dfrac{1}{t})$
 	- Expected cumulative regret: $\text{Loss}_{n} \approx \sum_{t = 1}^n \dfrac{1}{t} = O(\log n)$
 		- Logarithmic regret
 	- This strategy prevents premature convergence to a suboptimal action because it ensures sufficient exploration in the early stages.
@@ -1090,11 +1090,11 @@ We want to figure out how far empirical mean $\tilde{R}(a)$ is from the true mea
 
 Moreover, the more data we have, the tighter bound we can compute.
 
-Let's assume that we have an oracle that returns an upper bound $\text{UB}_{n}(a)$ on $R(a)$ for each arm based on $n$ trials of arm $a$. Assume the upper bound returned by this oracle converges to $R(a)$, i.e, $\lim_{n \to \infty} \text{UB}_{n} (a) = R(a)$
+Let's assume that we have an oracle that returns an upper bound $\text{UB}_{n}(a)$ on $R(a)$ for each arm based on $n$ trials of arm $a$. Assume the upper bound returned by this oracle converges to $R(a)$, i.e, $\lim_{n \to \infty} \text{UB}_{n}(a) = R(a)$
 
 For bandits, being positive is a good approach! Thus, an optimistic algorithm is to select $\arg \max_a \text{UB}_{n}(a)$ each step.
 
-**Theorem**: An optimistic strategy that always selects $\arg \max_a \text{UB}_{n}(a)$ will converge to $a^*$
+**Theorem**: An optimistic strategy that always selects $\arg \max_a \text{UB}_{n}(a)$ will converge to $a^{\star}$
 
 #### Probabilistic Upper Bound
 
@@ -1285,9 +1285,9 @@ A tree search that simulates all possible trajectories is very expensive/wastefu
 Thus, MCTS uses a Tractable Tree Search approach. The idea is to cut off the search at certain nodes
 
 - **Leaf Nodes**: approximate leaf values with value of default policy $\pi$
-	- $Q^*(s, a) \approx Q^\pi(s, a) \approx \dfrac{1}{n(s, a)} \sum_{k = 1}^n G_k$ 
+	- $Q^{\star}(s, a) \approx Q^\pi(s, a) \approx \dfrac{1}{n(s, a)} \sum_{k = 1}^n G_k$ 
 - **Chance Nodes**: approximate expectation by sampling from transition model
-	- $Q^*(s, a) \approx R(s, a) + \gamma \dfrac{1}{n(s, a)} \sum_{s' ~ \Pr(s' \mid s, a)}V(s')$  
+	- $Q^{\star}(s, a) \approx R(s, a) + \gamma \dfrac{1}{n(s, a)} \sum_{s' ~ \Pr(s' \mid s, a)}V(s')$  
 - **Decision Nodes**: expand only most promising actions
 
 
@@ -1308,8 +1308,8 @@ MCTS has the following steps:
 <img src="assets/lec14.8.png" width="250">
 
 - At each edge store $Q(s, a), \pi(a \mid s), n(s, a)$
-- At each node select edge $a^*$ that maximizes
-	- $a^* = \arg \max_a Q(s, a) + u(s, a)$
+- At each node select edge $a^{\star}$ that maximizes
+	- $a^{\star} = \arg \max_a Q(s, a) + u(s, a)$
 	- where $u(s, a) \propto \dfrac{\pi(a \mid s)}{1 + n(s, a)}$ is an exploration bonus
 	- where $Q(s, a) = \dfrac{1}{n(s, a)} \sum_i 1_i (s, a) [\lambda V_w(s)+ (1 - \lambda)G_i]$ 
 	- where $1_i(s, a) = 1$ if $(s, a)$ was visited at iteration $i$, else $0$
@@ -1348,9 +1348,9 @@ A rational agent will never play a strictly dominated strategy.
 
 #### Nash Equilibrium
 
-A strategy profile $a^*$ is a Nash equilibrium if no agent has incentive to deviate from its strategy given that no others deviate.
+A strategy profile $a^{\star}$ is a Nash equilibrium if no agent has incentive to deviate from its strategy given that no others deviate.
 
-$$\forall i, a_i \quad R_i(a^*_i, a^*_{-1}) \geq R_i(a_i, a^*_{-i})$$
+$$\forall i, a_i \quad R_i(a^{\star}_i, a^{\star}_{-1}) \geq R_i(a_i, a^{\star}_{-i})$$
 
 #### Mixed Nash Equilibrium
 
@@ -1360,7 +1360,7 @@ Instead of explicitly mentioning actions for states, mixed nash equilibrium defi
 
 #### Other Useful Theorems
 
-**Theorem**: In an n-player pure strategy game, if iterated elimination of strictly dominated strategies eliminates all but the strategies $(a_1^*, \dots,a_n^*)$ then these strategies are the unique Nash equilibria of the game
+**Theorem**: In an n-player pure strategy game, if iterated elimination of strictly dominated strategies eliminates all but the strategies $(a_1^{\star}, \dots,a_n^{\star})$ then these strategies are the unique Nash equilibria of the game
 
 **Theorem**: Any Nash equilibrium will survive iterated elimination of strictly dominated strategies.
 
@@ -1433,9 +1433,9 @@ Agents then calculate best responses according to this belief.
 
 - Cooperative Stochastic games have the same reward functions for all agents
 - Equilibrium for cooperative stochastic games is the **Pareto dominating (Nash) equilibrium**
-	- **Nash equilibrium**: $\forall i, a_i, R_i (a_i^*, a_{-i}^*) \geq R_i (a_i, a_{-i}^*)$
-	- **Pareto dominating**: $\forall i, R_i(a^*) \geq R_i(a'^{*})$
-- There exists a unique Pareto dominating Nash Equilibrium
+	- **Nash equilibrium**: $\forall i, a_i, R_i (a_i^{\star}, a_{-i}^{\star}) \geq R_i (a_i, a_{-i}^{\star})$
+	- **Pareto dominating**: $\forall i, R_i(a^{\star}) \geq R_i(a'^{\star})$
+- **IMPORTANT**: There exists a unique Pareto dominating Nash Equilibrium
 
 #### Joint Q learning 
 
@@ -1462,7 +1462,7 @@ In cooperative stochastic games, the Nash Q-values are unique (guaranteed unique
 In the case of competitive games, recall that we will always have rewards that are 0 sum. Thus, we can look at maximizing the value function for one particular state as minimizing the value function for another particular state.
 
 - The equilibrium in the case of competitive stochastic games is the min-max Nash equilibrium
-- There exists a unique min-max (Nash) equilibrium in utilities
+- **IMPORTANT**: There exists a unique min-max (Nash) equilibrium in utilities
 - The optimal min-max value function is given by
 
 <img src="assets/lec16.5.png" width="500">
@@ -1675,13 +1675,15 @@ A heuristic $h(n)$ is admissible if it never overestimates the cost of the cheap
 
 ##### Proof that A* is optimal
 
-Assume we have many paths in the frontier such that $C^* < C^n$
-$$(S \to G : C^{*}, \dots, S \to N : C^{n})$$
-Let there be a path $S \to N \to G$ (not in the frontier) that has cost $C'$ such that $C' < C^*$
+Assume we have many paths in the frontier such that $C^{\star} < C^n$
 
-According to admissibility, $C^n < C' < C^*$.
+$$(S \to G : C^{\star}, \dots, S \to N : C^{n})$$
 
-However, this contradicts our assumption that $C^* < C^n$. Thus, A* is optimal!
+Let there be a path $S \to N \to G$ (not in the frontier) that has cost $C'$ such that $C' < C^{\star}$
+
+According to admissibility, $C^n < C' < C^{\star}$.
+
+However, this contradicts our assumption that $C^{\star} < C^n$. Thus, $A^{\star}$ is optimal!
 
 ##### A* is optimally efficient
 
@@ -1689,7 +1691,7 @@ However, this contradicts our assumption that $C^* < C^n$. Thus, A* is optimal!
 - No algorithm with the same information can do better.
 - A* expands the minimum number of nodes to find the optimal solution.
 
-**Intuition for proof**: any algorithm that does not expand all nodes with $f(n) < C^*$ run the risk of missing the optimal solution. 
+**Intuition for proof**: any algorithm that does not expand all nodes with $f(n) < C^{\star}$ run the risk of missing the optimal solution. 
 
 TODO: write the contradiction proof
 
@@ -2188,11 +2190,13 @@ w_1 &= \arg \max_{\vert w \vert = 1} \dfrac{1}{m} \sum_{i = 1}^m \{ (w^T x_i) (x
 \end{align*}
 $$
 
-This then simplifies to finding the principal eigenvector of the empirical covariance matrix $\sum = \dfrac{1}{m} \sum_{i = 1}^m x_i x_i^T$
+Can show using lagrangian multiplier that this then simplifies to finding the principal eigenvector of the empirical covariance matrix $\sum = \dfrac{1}{m} \sum_{i = 1}^m x_i x_i^T$
 
 To find other Principal Components, a general form of principal vectors is given by
 
-$$w_k = \arg\max_{\vert w \vert = 1} \dfrac{1}{m} \sum_{i = 1}^m \{ w^T [x_i - \sum_{j = 1}^k w_j w_j^T x_i]^2 \}$$
+$$w_k = \arg\max_{\vert w \vert = 1} \dfrac{1}{m} \sum_{i = 1}^m \{ w^T [x_i - \sum_{j = 1}^k w_j w_j^T x_i] \}^2$$
+
+**Note**: Slides have a typo where the square is applied on the inner term instead of the whole summation term.
 
 ##### PCA Algorithm II
 
@@ -2228,7 +2232,22 @@ Therefore, $u$ must be an eigenvector of $X^T X$ with eigenvalue $\lambda$
 - All eigenvalues of a positive semi-definite are non-negative
 	- $u^T X^T X u \geq 0$, then $\lambda > 0$
 
-TODO - quiz questions for PCA + refer to answers on piazza
+
+##### How to calculate eigenvectors/eigenvalues?
+
+We know that if we have
+
+$$\Sigma u = \lambda u$$
+
+Then $u$ is an eigenvector, and $\lambda$ is an eigenvalue of $\Sigma$
+
+Can simplify this to get
+
+$$(\Sigma - \lambda I)u = 0$$
+
+For non trivial solutions, $(\lambda I - \Sigma)$ can not have an inverse and must be singular, and thus we need $\det(\Sigma - \lambda I) = 0$. We can solve the determinant as 0 to obtain values for $\lambda$.
+
+We can then find eigenvectors after plugging back into the equation above.
 
 ## lec 22 + 23 
 

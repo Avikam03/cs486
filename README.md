@@ -322,14 +322,17 @@ With this in mind, let's look at some common activation functions
 
 <img src="assets/lec6.5.png" width="500">
 
-### Convolutional Kernel
+
+### Convolutional Neural Network (CNN)
+
+#### Convolutional Kernel
 
 - **stride (s)**: number of pixels to move
 - **padding (p)**: 
 - **filter (f)**: size of the kernel
 
 $$
-\text{Output dimensions} = \Bigg(\frac{i - f + 2p}{s} + 1\Bigg), \Bigg( \frac{j - f + 2p}{s} + 1 \Bigg)
+\text{Output dimensions} = \Bigg(\lfloor\frac{i - f + 2p}{s}\rfloor + 1, \lfloor \frac{j - f + 2p}{s}\rfloor + 1 \Bigg)
 $$
 
 $$
@@ -349,7 +352,7 @@ Thus, we have the following info:
 - output channels $= 8$
 
 $$
-\text{Output dimensions} = \Bigg(\frac{32 - 5}{1} + 1\Bigg), \Bigg( \frac{32 - 5}{1} + 1 \Bigg) = (28), (28)
+\text{Output dimensions} = \Bigg(\frac{32 - 5}{1} + 1, \frac{32 - 5}{1} + 1 \Bigg) = (28, 28)
 $$
 
 $$
@@ -364,10 +367,8 @@ Thus, we have the following info:
 - $s = 2$
 
 $$
-\text{Output dimensions} = \Bigg(\frac{28 - 3}{2} + 1\Bigg), \Bigg( \frac{28 - 3}{2} + 1 \Bigg) = (13.5), (13.5) = (13, 13) \quad
+\text{Output dimensions} = \Bigg(\lfloor\frac{28 - 3}{2}\rfloor + 1, \lfloor \frac{28 - 3}{2} \rfloor + 1 \Bigg) = (13, 13)
 $$
-
-*round down since there is no padding*
 
 Since the depth is 16, the total number of neurons is $13 \times 13 \times 16 = 2704$
 
@@ -1331,12 +1332,31 @@ Moreover, transition functions aren't actually stationary.
 
 ### Game Theory
 
+Good resources:
+- [Alice Gao Notes 1](https://cs.uwaterloo.ca/~a23gao/cs486686_f21/lecture_notes/Lecture_22_on_Game_Theory_1.pdf)
+- [Alice Gao Notes 2](https://cs.uwaterloo.ca/~a23gao/cs486686_f21/lecture_notes/Lecture_23_on_Game_Theory_2.pdf)
+
 skipping some basic definition covered in slides. also skipping examples. refer to slides for that.
 
 Games can be
 - **cooperative**: agents have a common goal
 - **competitive**: agents have conflicting goals
 - **mixed**: agents have different goals, which are not conflicting
+
+#### Intuition 
+
+Some intuition behind terminology ahead:
+
+- **Dominant Strategy Equilibrium**: This is the state reached when an agent's action does not change regardless of what the opponent does. 
+	- For example, if Bob and Alice choose between dancing and staying at home, and if Bob's utility (reward) is higher doing one particular action regardless of what we assume Alice does, then that action is the dominating strategy for Bob. 
+	- Dominant Strategy Equilibrium is also a Nash equilibrium
+- **Nash Equilibrium**: These are the states reached when an agent's action does change based on what the opponent does
+	- For example, continuing the same example as above, if Bob has higher rewards doing different actions depending on which action Alice executes, then there is no single best action best for Bob. In this case, we say that Bob does not have a dominant strategy, and thus there is no dominant strategy equilibrium. 
+	- In this case, it is likely that since both parties end up play the best responses to each others’ strategies, and we thus end up with 2 nash equilibriums
+- **Pareto Optimality**: When we have multiple nash equilibrium, our intuition tells us that one might be better than the other. However, Nash Equilibrium doesn't say anything about which equilibria is the best.
+	- **Pareto dominance**: An outcome $o$ Pareto dominates another outcome $o'$ iff every player is weakly better off in $o$ and at least one player is strictly better off in $o$.
+	- **A Pareto optimal outcome**: An outcome $o$ is Pareto optimal iff no other outcome $o'$ Pareto dominates $o$.
+
 
 #### Dominating Strategies
 
@@ -1435,7 +1455,7 @@ Agents then calculate best responses according to this belief.
 - Equilibrium for cooperative stochastic games is the **Pareto dominating (Nash) equilibrium**
 	- **Nash equilibrium**: $\forall i, a_i, R_i (a_i^{\star}, a_{-i}^{\star}) \geq R_i (a_i, a_{-i}^{\star})$
 	- **Pareto dominating**: $\forall i, R_i(a^{\star}) \geq R_i(a'^{\star})$
-- **IMPORTANT**: There exists a unique Pareto dominating Nash Equilibrium
+- **IMPORTANT**: There exists a unique Pareto dominating Nash Equilibrium (PYQ)
 
 #### Joint Q learning 
 
@@ -1809,7 +1829,7 @@ $$
 h(m) - h(n) \leq \text{cost}(m, n)
 $$
 
-- Most admissible heuristic functions are consistent.
+- **IMPORTANT**: Most admissible heuristic functions are consistent (PYQ)
 - It’s challenging to come up with a heuristic function that is admissible but not consistent
 
 
@@ -2249,6 +2269,89 @@ For non trivial solutions, $(\lambda I - \Sigma)$ can not have an inverse and mu
 
 We can then find eigenvectors after plugging back into the equation above.
 
-## lec 22 + 23 
+## lec 22
+
+### RNN
+
+RNN Backpropagation:
+- [d2l.ai notes](https://d2l.ai/chapter_recurrent-neural-networks/bptt.html)
+
+### CNN
+
+CNN Backpropagation:
+- [cmu deep learning notes](https://deeplearning.cs.cmu.edu/F21/document/recitation/Recitation5/CNN_Backprop_Recitation_5_F21.pdf)
+- [cmu deep learning video](https://www.youtube.com/watch?v=Betg6UI9d0Q)
+
+
+## lec23
+
+### Attention
+
+We have seen before that a lot of our models exploit context:
+- CNN: exploits context from **spatial locality** (access nearby locations)
+- RNN: exploits context from temporal locality (access same locations again in the future)
+
+Context is exploited by embedding priors into the model. This forces them to pay attention to relevant features.
+
+**Attention** in deep-learning is similar in that we still want to pay attention to the most relevant parts, but we want to be able to do this without embedding priors. Ideally, we want our model to be able to learn what to pay attention to. 
+
+**Issues with Recurrent Attention**
+- Scalability issues: performance degrades as the distance between words increases
+- Parallelization limitations: recurrent processes lacks ability to be parallelized
+- Memory constraints
+- RNNs have limited memory and struggle with long-range dependencies
+- Diluted impact of earlier elements on output as sequence progresses
+
+We thus want to decouple attention from RNNs.
+
+We can think of attention as a set of weights that determine the importance of elements to be passed forward in the model. Our objective thus is to come up with a standard procedure of determining these weights, and then applying them to enhance specific features.
+
+Some new notation used in Attention:
+- $k_i$: **key** vector for position $i$ in an arbitrary sequence
+- $v_i$: **value** vector for position $i$ in an arbitrary sequence
+- $q_j$: **query** vector for position $j$ in a (same/different) arbitrary sequence
+- $o_j$: **output** vector corresponding to position $j$
+
+There are two forms of attention based on how we obtain the above:
+- **Self Attention**
+	- Keys, values, and queries are all derived from the same source
+- **Cross Attention**
+	- Keys-values, and queries are all derived from separate source
+
+![](assets/lec23.1.png)
+
+We want to learn the linear maps/weight matrices that help us compute key, values, query – which are then fed into our attention mechanism.
+
+<img src="assets/lec23.2.png" width="600">
+
+**Why Self-Attention?**
+- Lower computational complexity
+- Greater amount of the computation that can be parallelized
+- Each representation encodes the positional information of the sequence
+
+![](assets/lec23.3.png)
+
+#### Computation Flow of Single-Layer Self-Attention
 
 TODO
+
+#### Computation and Memory Complexity
+
+- how many parameters
+- how many matrix multiplication
+- back prop complexity
+- how many intermediate things need to cache
+
+- We only consider matrix multiplication complexity
+	- $W_1 \in R^{d \times p} \quad W_2 \in R^{p \times d'}$ dot product uses $d \times p \times d'$ float-number multiplication
+- What are the multiplications in the transformer?
+	- Q/K/V Projection
+	- O Projection
+	- FFN up-projection
+	- FFN down-projection
+	- Attention map dot-product
+	- Attention value aggregation
+- What is the total amount of multiplication in these six operations?
+	- $2NBd \times (6d + N)$ where $B$ is the batch size, $N$ is the sequence length.
+
+TODO: don't understand transformer complexity calculation

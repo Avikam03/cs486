@@ -48,6 +48,14 @@ need to make 8 comparisons
 
 ### Bayesian Networks
 
+Why do we need bayesian networks?
+- We can compute any probability using the joint distribution, but
+	- Quickly become intractable as the number of variables grows.
+	- Unnatural and tedious to specify all the probabilities.
+
+Properties of bayesian networks:
+- is a compact version of the joint distribution
+- takes advantage of unconditional/conditional independence among variables
 - Directed Acyclic Graph
 - Each node is a random variable - can be continuous or discrete
 - Represents conditional dependencies
@@ -57,6 +65,9 @@ need to make 8 comparisons
 Representing the joint distribution
 
 $$P(X_n \land \dots \land X_1) = \prod_{i = 1}^n P(X_i \mid \text{Parents}(X_i))$$
+
+**Note**: $X_i$ is independent from other non-descendent variables given $\text{Parents}(X_i)$
+
 
 ### Three Key Structures
 
@@ -957,6 +968,8 @@ $$\theta_{n + 1} = \theta_{n} + a_n \nabla_\theta \log \pi_\theta(a_n^{\star} \m
 
 Data: $\{ (s_1, a_1, r_1), (s_2, a_2, r_2), \dots \}$ 
 
+note that the actions here in our data are not necessarily optimal
+
 Our goal is to maximize discounted sum of rewards:
 
 $$
@@ -970,6 +983,8 @@ We claim that the gradient of this expression is similar to the gradient obtaine
 $$\theta_{n + 1} = \theta_{n} + a_n \gamma^n G_n \nabla_\theta \log \pi_\theta(a_n^{\star} \mid s_n)$$
 
 where $G_n = \sum_{t = 0}^\infty \gamma^t \cdot r_{n + t}$
+
+Intuition: don’t know if action is optimal or not, but can estimate how good it is through rewards
 
 Omitting derivation of gradient^. Check Slides for more details. Prof. Pascal mentioned in class that we don't need to memorize the derivation. steps of the derivation might be a little important to understand. TODO go over derivation again
 
@@ -1737,7 +1752,7 @@ TODO: write the contradiction proof
 
 Given heuristics $h_1(n)$ and $h_2(n)$, we say that $h_2(n)$ dominates $h_1(n)$ if 
 - $(\forall n (h_2(n) \geq h_1(n)))$
-- $(\exists n (h_2(n) \geq h_1(n)))$
+- $(\exists n (h_2(n) > h_1(n)))$
 
 **Theorem:**
 If $h_2(n)$ dominates $h_1(n)$, then A* using $h_2$ never expands more states than A* using $h_1$
@@ -1759,8 +1774,6 @@ If $h_2(n)$ dominates $h_1(n)$, then A* using $h_2$ never expands more states th
 - Cycle Pruning is a special case of Multi-Path Pruning. Following a cycle is *one way* to have multiple paths to the same node.
 
 <img src="assets/lec18.2.png" width="400">
-
-
 
 In this algorithm, visited nodes are added to the explored set. Paths that lead to an element in the explored set are still added to the frontier, they're just not explored. Thus, time complexity is good, but space complexity is bad!
 
@@ -2133,7 +2146,7 @@ The choice of $k$ determines the outcome of clustering
 
 #### Silhouette Analysis
 
-- Execute k-means with multiple values of $k in \{ 1, 2, \dots, k_{\text{max}} \}$
+- Execute k-means with multiple values of $k \in \{ 1, 2, \dots, k_{\text{max}} \}$
 - Calculate average silhouette score $s(x)$ for each $k$ across the dataset
 - Select $k$ that maximizes average $s(x)$
 
@@ -2268,6 +2281,11 @@ $$(\Sigma - \lambda I)u = 0$$
 For non trivial solutions, $(\lambda I - \Sigma)$ can not have an inverse and must be singular, and thus we need $\det(\Sigma - \lambda I) = 0$. We can solve the determinant as 0 to obtain values for $\lambda$.
 
 We can then find eigenvectors after plugging back into the equation above.
+
+### autoencoders & GANs
+
+see slides. most probably not going to be tested.
+
 
 ## lec 22
 

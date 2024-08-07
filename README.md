@@ -2425,13 +2425,32 @@ Answer by prof:
 
 ![](assets/lec23.7.png)
 
-#### Computation and Memory Complexity
-
-- how many parameters
-- how many matrix multiplication
-- back prop complexity
-- how many intermediate things need to cache
 - computation flow of single-Layer Self-Attention
+
+**What is the parameter size? (in the case of 1 head)**
+
+$$
+(3d \times d_k) + (d \times d_k) + 8d^2
+$$
+
+where
+- projection to $Q, K, V$ gives $3 d \times d_k$
+- projection of $o$ back to $d$ gives $d_k \times d$
+- feed forward layer gives $4d^2 + 4d^2 = 8d^2$
+
+**What is the parameter size with $h$ heads?** [chatgpt verified](https://chatgpt.com/share/b4835dd6-f2d1-4e36-b157-4dc17b571411)
+
+$$
+(3H \cdot d \times d_k) + (H \cdot d \times d_k) + 8d^2
+$$
+
+where
+- projection to $Q, K, V$ gives $3H d \times d_k$
+- projection of $o$ back to $d$ gives $H \cdot d_k \times d$
+- feed forward layer gives $4d^2 + 4d^2 = 8d^2$
+
+
+**Space Complexity**
 
 - We only consider matrix multiplication complexity
 	- where a dot product of $W_1 \in R^{d \times p} \quad W_2 \in R^{p \times d'}$ uses $d \times p \times d'$ float-number multiplication
@@ -2444,10 +2463,9 @@ Answer by prof:
 	- Attention value aggregation
 - What is the total amount of multiplication in these six operations?
 	- $2NBd \times (6d + N)$ where $B$ is the batch size, $N$ is the sequence length.
-	- Steps:
-		- Feedforward: $N \times (4d^2 + 8d^2)$
+	- where
 		- Attention: $2N^2 \times d$
 			- half from attention, half from value aggregation
+		- Feedforward: $N \times (4d^2 + 8d^2)$
 		- Adding these two + considering batch size we get the above result
 
-TODO: don't understand transformer complexity calculation

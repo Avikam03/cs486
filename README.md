@@ -1296,9 +1296,13 @@ However, what if instead of planning at arbitrary states, we planned at the curr
 
 ### Monte Carlo Tree Search (MCTS)
 
+**Good resources**:
+- [yt video 1](https://www.youtube.com/watch?v=hmQogtp6-fs)
+- [yt video 2](https://www.youtube.com/watch?v=UXW2yZndl7U)
+
 A tree search that simulates all possible trajectories is very expensive/wasteful. 
 
-Thus, MCTS uses a Tractable Tree Search approach. The idea is to cut off the search at certain nodes
+MCTS is inspired the Tractable Tree Search approach. The idea is to cut off the search at certain nodes. MCTS thus combines these three ideas:
 
 - **Leaf Nodes**: approximate leaf values with value of default policy $\pi$
 	- $Q^{\star}(s, a) \approx Q^\pi(s, a) \approx \dfrac{1}{n(s, a)} \sum_{k = 1}^n G_k$ 
@@ -1306,8 +1310,10 @@ Thus, MCTS uses a Tractable Tree Search approach. The idea is to cut off the sea
 	- $Q^{\star}(s, a) \approx R(s, a) + \gamma \dfrac{1}{n(s, a)} \sum_{s' ~ \Pr(s' \mid s, a)}V(s')$  
 - **Decision Nodes**: expand only most promising actions
 
+<img src="assets/lec14.10.png" width="400">
 
-MCTS has the following steps:
+
+MCTS follows 4 steps:
 1. Selection
 2. Expansion
 3. Simulation
@@ -2293,6 +2299,7 @@ see slides. most probably not going to be tested.
 
 RNN Backpropagation:
 - [d2l.ai notes](https://d2l.ai/chapter_recurrent-neural-networks/bptt.html)
+- [example](https://chatgpt.com/share/7f6b91e9-b8be-4f0c-80b7-e39e96dc221e)
 
 ### CNN
 
@@ -2307,7 +2314,7 @@ CNN Backpropagation:
 
 We have seen before that a lot of our models exploit context:
 - CNN: exploits context from **spatial locality** (access nearby locations)
-- RNN: exploits context from temporal locality (access same locations again in the future)
+- RNN: exploits context from **temporal locality** (access same locations again in the future)
 
 Context is exploited by embedding priors into the model. This forces them to pay attention to relevant features.
 
@@ -2330,6 +2337,8 @@ Some new notation used in Attention:
 - $q_j$: **query** vector for position $j$ in a (same/different) arbitrary sequence
 - $o_j$: **output** vector corresponding to position $j$
 
+<img src="assets/lec23.4.png" width="600">
+
 There are two forms of attention based on how we obtain the above:
 - **Self Attention**
 	- Keys, values, and queries are all derived from the same source
@@ -2338,9 +2347,66 @@ There are two forms of attention based on how we obtain the above:
 
 ![](assets/lec23.1.png)
 
-We want to learn the linear maps/weight matrices that help us compute key, values, query – which are then fed into our attention mechanism.
+To use a decoupled attention mechanism, the following is implemented
+- $f_{\text{att}}(\cdot) = \text{scaled dot product attention}$ 
+	- $e_{ij} = f_{\text{att}} (q_j, k_i) = \dfrac{q_j \cdot k_i}{\sqrt{d_k}}$
+	- good representation of computability
+	- fast + interpretable computation (parallelizable across all queries on GPUs)
+	- allows for stable softmax gradients in high dimensions (prevents large magnitudes)
+- common dimension is imposed for keys, values, and queries
+	- $k_i, v_i, q_i \in R^{d_k}$, and thus $o_j \in R^{d_k}$
+	- required for dot-product
+	- simplifies architecture with predictable attention output shape
+	- provides consistent hidden state dimensions for easier model analysis
+
+
+**Misconceptions about Transformers**
+- Many people believe that Attention in transformers simply performs a vector similarity search
+	- They believe that a transformer simply find similar key-query pairs
+- This is because of over-simplification in terminology
+- While the key-query value explanation is convenient, many people don't know how to look past it
+
+So what exactly are we learning?
+
+There is nothing to learn in the obtained dot product attention obtained in the end. Instead, we want to learn the linear maps/weight matrices that help us compute key, values, query – which are then fed into our attention mechanism.
 
 <img src="assets/lec23.2.png" width="600">
+
+#### Multi-Head
+
+- Builds on scaled dot product attention
+- Extension of the generalized attention mechanism talked about so far
+- Leverages multiple _heads_ to attend to different things
+
+**Why multi-heads?**
+- When we perform matrix mult + summation at the end $o_j = \sum_{i} a_{ji} v_i$, we lose resolution in our representation. we lose sight about what is important – and have committed to one perspective.
+- The goal of multi-head attention is to learn multiple sets of weight matrices to attend to different things. As the number of heads increases, there is a higher chance of resolution is preserved and information is retained.
+	- allows the model to jointly attend to information from different representation subspaces.
+
+<img src="assets/lec23.5.png" width="600">
+
+Doesn't multiple heads add a lot of extra computation though? Yes it does. That's why we take some precautions (covered in the above image as well). The precautions basically ensure we shrink the dimensions of the sub-representations – go down to a smaller representation space for each attention head. A compromise that the writers of the paper find is to set $d_k = \dfrac{d_{\text{model}}}{h}$
+
+<img src="assets/lec23.6.png" width="400">
+
+This ensures that all the heads together take roughly the same computational time as one fully dimensioned attention head.
+
+Note that in the image above, we saw that $O_{h_i} \in R^{t \times d_k}$. However, our model actually expects $O \in R^{t \times d_{\text{model}}}$. Thus, we need another set of weights $W_O$ that combines all of the output to a single output that our model expects.
+
+#### Transformer Architecture
+
+Ways attention is used in the transformer:
+- **Self-attention in the encoder**
+	- Allows the model to attend to all positions in the previous encoder layer
+	- Embeds context about how elements in the sequence relate to one another
+- **Masked self-attention in the decoder**
+	- Allows the model to attend to all positions in the previous decoder layer up to and including the current position (during auto-regressive process)
+	- Prevents forward looking bias by stopping leftward information flow during training
+	- Also embeds context about how elements in the sequence relate to one another
+- **Encoder-decoder cross-attention**
+	- Allows decoder layers to attend all parts of the latent representation produced by the encoder
+	- Pulls context from the encoder sequence over to the decoder
+
 
 **Why Self-Attention?**
 - Lower computational complexity
@@ -2349,9 +2415,15 @@ We want to learn the linear maps/weight matrices that help us compute key, value
 
 ![](assets/lec23.3.png)
 
-#### Computation Flow of Single-Layer Self-Attention
 
-TODO
+**Why do we use the Feed forward layer in Transformers?**
+- Why do we need a Feed Forward Network (FFN) after the multi head self attention layer?
+- As in, if we want the desired dimensions, don't we get that already in the attention output?
+
+Answer by prof:
+- https://www.reddit.com/r/MLQuestions/comments/gsz2tm/why_do_we_use_the_feed_forward_layer_in/
+
+![](assets/lec23.7.png)
 
 #### Computation and Memory Complexity
 
@@ -2359,9 +2431,10 @@ TODO
 - how many matrix multiplication
 - back prop complexity
 - how many intermediate things need to cache
+- computation flow of single-Layer Self-Attention
 
 - We only consider matrix multiplication complexity
-	- $W_1 \in R^{d \times p} \quad W_2 \in R^{p \times d'}$ dot product uses $d \times p \times d'$ float-number multiplication
+	- where a dot product of $W_1 \in R^{d \times p} \quad W_2 \in R^{p \times d'}$ uses $d \times p \times d'$ float-number multiplication
 - What are the multiplications in the transformer?
 	- Q/K/V Projection
 	- O Projection
@@ -2371,5 +2444,10 @@ TODO
 	- Attention value aggregation
 - What is the total amount of multiplication in these six operations?
 	- $2NBd \times (6d + N)$ where $B$ is the batch size, $N$ is the sequence length.
+	- Steps:
+		- Feedforward: $N \times (4d^2 + 8d^2)$
+		- Attention: $2N^2 \times d$
+			- half from attention, half from value aggregation
+		- Adding these two + considering batch size we get the above result
 
 TODO: don't understand transformer complexity calculation
